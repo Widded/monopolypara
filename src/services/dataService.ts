@@ -124,11 +124,15 @@ export const dataService = {
           .filter(d => d.debtor_id === p.id && (d.status === 'active' || d.status === 'partially_paid'))
           .reduce((sum, d) => sum + Number(d.remaining_amount), 0);
 
+        const isCurrent = p.session_token === sessionToken;
         return {
           ...p,
           balance: Number(p.balance),
           total_receivable,
           total_debt,
+          // Güvenlik ve Gizlilik: PIN ve session_token sadece oyuncunun kendisine gösterilir
+          recovery_pin: isCurrent ? p.recovery_pin : undefined,
+          session_token: isCurrent ? p.session_token : '',
         };
       });
 
