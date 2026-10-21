@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, HandCoins, AlertTriangle, Loader2 } from 'lucide-react';
 import { Player } from '../types';
 import { formatMoney } from '../utils/formatters';
@@ -25,11 +25,13 @@ export const LendDebtModal: React.FC<LendDebtModalProps> = ({
   const [amountStr, setAmountStr] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const prevIsOpenRef = useRef<boolean>(false);
 
   const potentialDebtors = players.filter(p => p.id !== currentPlayer.id);
 
+  // Sadece modal İLK AÇILDIĞINDA sıfırla, arka plan güncellemelerinde kullanıcının yazdığı silinmesin
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !prevIsOpenRef.current) {
       if (preSelectedDebtor && preSelectedDebtor.id !== currentPlayer.id) {
         setDebtorId(preSelectedDebtor.id);
       } else if (potentialDebtors.length > 0) {
@@ -38,7 +40,8 @@ export const LendDebtModal: React.FC<LendDebtModalProps> = ({
       setAmountStr('');
       setError(null);
     }
-  }, [isOpen, preSelectedDebtor, currentPlayer.id, players]);
+    prevIsOpenRef.current = isOpen;
+  }, [isOpen, preSelectedDebtor, currentPlayer.id]);
 
   if (!isOpen) return null;
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Send, AlertTriangle, Loader2 } from 'lucide-react';
 import { Player } from '../types';
 import { formatMoney } from '../utils/formatters';
@@ -25,11 +25,13 @@ export const TransferModal: React.FC<TransferModalProps> = ({
   const [amountStr, setAmountStr] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const prevIsOpenRef = useRef<boolean>(false);
 
   const potentialReceivers = players.filter(p => p.id !== currentPlayer.id);
 
+  // Sadece modal İLK AÇILDIĞINDA sıfırla, arka plan güncellemelerinde kullanıcının yazdığı silinmesin
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !prevIsOpenRef.current) {
       if (preSelectedReceiver && preSelectedReceiver.id !== currentPlayer.id) {
         setReceiverId(preSelectedReceiver.id);
       } else if (potentialReceivers.length > 0) {
@@ -38,7 +40,8 @@ export const TransferModal: React.FC<TransferModalProps> = ({
       setAmountStr('');
       setError(null);
     }
-  }, [isOpen, preSelectedReceiver, currentPlayer.id, players]);
+    prevIsOpenRef.current = isOpen;
+  }, [isOpen, preSelectedReceiver, currentPlayer.id]);
 
   if (!isOpen) return null;
 

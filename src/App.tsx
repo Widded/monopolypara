@@ -101,6 +101,8 @@ export const App: React.FC = () => {
     };
   }, [roomId, refreshRoomState]);
 
+  const isAnyModalOpen = isTransferOpen || isLendOpen || isPayOpen || isBankerOpen;
+
   // 5 saniyede bir otomatik verileri yenile (Polling) + Ön plana gelindiğinde anında güncelle
   useEffect(() => {
     if (!roomId) return;
@@ -116,8 +118,11 @@ export const App: React.FC = () => {
     window.addEventListener('pageshow', handleSync);
 
     // Her 5 saniyede bir düzenli ve otomatik olarak tüm verileri güncelle
+    // Kullanıcı bir modalda para/borç tutarı yazarken polling duraklatılır
     const interval = setInterval(() => {
-      refreshRoomState();
+      if (!isAnyModalOpen) {
+        refreshRoomState();
+      }
     }, 5000);
 
     return () => {
@@ -126,7 +131,7 @@ export const App: React.FC = () => {
       window.removeEventListener('pageshow', handleSync);
       clearInterval(interval);
     };
-  }, [roomId, refreshRoomState]);
+  }, [roomId, refreshRoomState, isAnyModalOpen]);
 
   // Room creation
   const handleCreateRoom = async (playerName: string) => {

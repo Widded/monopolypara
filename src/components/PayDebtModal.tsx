@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, CheckSquare, AlertTriangle, Loader2, Handshake } from 'lucide-react';
 import { Debt, Player } from '../types';
 import { formatMoney } from '../utils/formatters';
@@ -30,11 +30,13 @@ export const PayDebtModal: React.FC<PayDebtModalProps> = ({
   const [amountStr, setAmountStr] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const prevIsOpenRef = useRef<boolean>(false);
 
   const activeDebts = debts.filter(d => (d.status === 'active' || d.status === 'partially_paid') && d.remaining_amount > 0);
 
+  // Sadece modal İLK AÇILDIĞINDA sıfırla, arka plan güncellemelerinde kullanıcının yazdığı silinmesin
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !prevIsOpenRef.current) {
       if (preSelectedDebtId) {
         setSelectedDebtId(preSelectedDebtId);
       } else if (activeDebts.length > 0) {
@@ -47,7 +49,8 @@ export const PayDebtModal: React.FC<PayDebtModalProps> = ({
       setIsSettlement(false);
       setError(null);
     }
-  }, [isOpen, preSelectedDebtId, debts, currentPlayer.id]);
+    prevIsOpenRef.current = isOpen;
+  }, [isOpen, preSelectedDebtId, currentPlayer.id]);
 
   if (!isOpen) return null;
 
