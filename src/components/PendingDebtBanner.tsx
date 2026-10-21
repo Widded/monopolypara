@@ -49,7 +49,7 @@ export const PendingDebtBanner: React.FC<PendingDebtBannerProps> = ({
       {incomingPending.map(debt => (
         <div
           key={debt.id}
-          className="bg-[#1C241E] border border-accent/40 rounded-xl p-3 shadow-lg shadow-accent/5 animate-in fade-in duration-150"
+          className="bg-bg-surface border border-accent/40 rounded-xl p-3"
         >
           <div className="flex items-start gap-2.5">
             <div className="p-1.5 rounded-lg bg-accent/15 text-accent mt-0.5 shrink-0">
@@ -106,7 +106,7 @@ export const PendingDebtBanner: React.FC<PendingDebtBannerProps> = ({
           className="bg-bg-card border border-border-subtle rounded-xl p-2.5 flex items-center justify-between gap-2 text-xs"
         >
           <div className="flex items-center gap-2 min-w-0">
-            <Clock className="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
+            <Clock className="w-4 h-4 text-text-muted shrink-0" />
             <div className="min-w-0">
               <span className="text-text-main font-medium truncate block">
                 <strong>{debt.debtor_name}</strong> kişisine{' '}

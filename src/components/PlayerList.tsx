@@ -46,13 +46,9 @@ export const PlayerList: React.FC<PlayerListProps> = ({
       {/* 2. BÖLÜM: DİĞER OYUNCULAR LİSTESİ */}
       <div className="pt-1">
         <div className="flex items-center justify-between mb-1.5 px-0.5">
-          <div className="flex items-center gap-1.5">
-            <Users className="w-3.5 h-3.5 text-text-muted" />
-            <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">
-              Diğer Oyuncular ({otherPlayers.length})
-            </span>
-          </div>
-          <span className="text-[10px] text-text-muted">Para göndermek için oyuncuya dokunun</span>
+          <span className="text-[11px] font-semibold text-text-muted uppercase tracking-wider">
+            Diğer Oyuncular ({otherPlayers.length})
+          </span>
         </div>
 
         {otherPlayers.length > 0 ? (
