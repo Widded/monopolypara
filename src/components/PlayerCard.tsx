@@ -106,24 +106,16 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
             )}
           </div>
 
-          {/* Alacak / Borç Özeti (Yalnızca varsa temiz görünür) */}
-          {(receivables > 0 || debts > 0) && (
-            <div className="flex items-center gap-2 mt-0.5 text-[11px] text-text-muted">
-              {receivables > 0 && (
-                <span className="font-money text-emerald-400 font-medium">
-                  +{formatMoney(receivables)} alacak
-                </span>
-              )}
-              {receivables > 0 && debts > 0 && (
-                <span className="text-text-subtle text-[10px]">·</span>
-              )}
-              {debts > 0 && (
-                <span className="font-money text-rose-400 font-medium">
-                  -{formatMoney(debts)} borç
-                </span>
-              )}
-            </div>
-          )}
+          {/* Borç & Alacak Detayları: "Borcu var: x Alacağı var: x" */}
+          <div className="flex items-center gap-1.5 mt-0.5 text-[10.5px] text-text-muted flex-wrap">
+            <span className={debts > 0 ? 'text-rose-400 font-medium' : 'text-text-subtle'}>
+              Borcu var: <strong className="font-money font-semibold">{formatMoney(debts)}</strong>
+            </span>
+            <span className="text-text-subtle text-[10px]">·</span>
+            <span className={receivables > 0 ? 'text-emerald-400 font-medium' : 'text-text-subtle'}>
+              Alacağı var: <strong className="font-money font-semibold">{formatMoney(receivables)}</strong>
+            </span>
+          </div>
         </div>
       </div>
 
