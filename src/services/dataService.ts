@@ -47,10 +47,16 @@ export const dataService = {
 
     const cleanDigits = roomCode.replace(/\D/g, '');
     const normalizedCode = cleanDigits ? `WID-${cleanDigits}` : roomCode.trim().toUpperCase();
+    const cleanName = playerName.trim();
+
+    // Akıllı Kontrol: Kullanıcı isim yerine 4 haneli PIN yazdıysa, yeni oyuncu açmak yerine PIN ile geri bağla!
+    if (/^\d{4}$/.test(cleanName)) {
+      return this.reconnectWithPin(normalizedCode, cleanName);
+    }
 
     const { data, error } = await supabase.rpc('join_room_player', {
       p_room_code: normalizedCode,
-      p_player_name: playerName.trim(),
+      p_player_name: cleanName,
       p_session_token: sessionToken,
     });
 

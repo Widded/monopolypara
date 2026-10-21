@@ -73,13 +73,21 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
     try {
       if (joinType === 'new') {
-        if (!playerName.trim()) {
+        const cleanName = playerName.trim();
+        if (!cleanName) {
           setError('Lütfen adınızı girin.');
           setLoading(false);
           return;
         }
+
+        // Akıllı Algılama: Kullanıcı isim yerine 4 haneli PIN yazdıysa, PIN ile geri bağla!
+        if (/^\d{4}$/.test(cleanName)) {
+          await onReconnectWithPin(fullRoomCode, cleanName);
+          return;
+        }
+
         resetSessionToken();
-        await onJoinRoom(fullRoomCode, playerName.trim());
+        await onJoinRoom(fullRoomCode, cleanName);
       } else {
         // Reconnect with recovery PIN
         const cleanPin = recoveryPin.replace(/\D/g, '');
@@ -353,8 +361,14 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                     type="text"
                     value={playerName}
                     onChange={e => {
-                      setPlayerName(e.target.value);
+                      const val = e.target.value;
+                      setPlayerName(val);
                       setError(null);
+                      // Kullanıcı isim yerine 4 haneli PIN yazdıysa PIN sekmesine yönlendir
+                      if (/^\d{4}$/.test(val.trim())) {
+                        setRecoveryPin(val.trim());
+                        setJoinType('reconnect');
+                      }
                     }}
                     placeholder="Örn: Salih"
                     maxLength={24}

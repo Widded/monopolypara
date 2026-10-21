@@ -11,6 +11,9 @@ UPDATE public.players
 SET recovery_pin = LPAD(FLOOR(1000 + RANDOM() * 9000)::TEXT, 4, '0') 
 WHERE recovery_pin IS NULL OR TRIM(recovery_pin) = '';
 
+-- Yanlışlıkla PIN girilerek oluşturulmuş sahte 4 haneli isimli oyuncuları temizle
+DELETE FROM public.players WHERE name ~ '^[0-9]{4}$';
+
 -- 2. OYUNCU KURTARMA KODUYLA (PIN) GERİ BAĞLANMA
 CREATE OR REPLACE FUNCTION public.reconnect_player_with_pin(
     p_room_code TEXT,
@@ -120,6 +123,35 @@ BEGIN
             'player', row_to_json(v_player)
         ) INTO v_result;
         RETURN v_result;
+    END IF;
+
+    -- Akıllı PIN Algılama: Kullanıcı isim alanına yanlışlıkla 4 haneli PIN yazdıysa
+    IF v_clean_name ~ '^[0-9]{4}$' THEN
+        SELECT * INTO v_player 
+        FROM players 
+        WHERE room_id = v_room.id 
+          AND (recovery_pin = v_clean_name OR recovery_pin = LPAD(v_clean_name, 4, '0'))
+        LIMIT 1;
+
+        IF FOUND THEN
+            -- Kullanıcının adı PIN olmasın, gerçek oyuncu hesabına geri bağlansın!
+            UPDATE players 
+            SET is_online = true, 
+                session_token = p_session_token 
+            WHERE id = v_player.id;
+
+            v_player.session_token := p_session_token;
+            v_player.is_online := true;
+
+            SELECT jsonb_build_object(
+                'room', row_to_json(v_room),
+                'player', row_to_json(v_player)
+            ) INTO v_result;
+
+            RETURN v_result;
+        ELSE
+            RAISE EXCEPTION 'Oyuncu adı 4 haneli PIN olamaz. Masaya geri dönmek için "Geri Dön (PIN)" sekmesini kullanın.';
+        END IF;
     END IF;
 
     -- Aynı isimde oyuncu var mı kontrol et

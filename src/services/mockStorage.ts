@@ -87,6 +87,12 @@ export const mockStorage = {
       throw new Error('Oda bulunamadı veya kapatılmış.');
     }
 
+    const cleanName = playerName.trim();
+    // Akıllı Kontrol: Kullanıcı isim yerine 4 haneli PIN yazdıysa, PIN ile geri bağla
+    if (/^\d{4}$/.test(cleanName)) {
+      return this.reconnectWithPin(roomCode, cleanName, sessionToken);
+    }
+
     // Check if player with this session already exists in room
     const existingPlayerBySession = Object.values(data.players).find(
       p => p.room_id === room.id && p.session_token === sessionToken
