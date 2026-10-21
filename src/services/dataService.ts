@@ -451,8 +451,7 @@ export const dataService = {
   async payToBank(roomId: string, amount: number, description?: string): Promise<void> {
     const sessionToken = getOrCreateSessionToken();
     if (!isSupabaseConfigured() || !supabase) {
-      mockStorage.payToBank(roomId, sessionToken, amount, description);
-      return;
+      throw new Error('Supabase bağlantısı bulunamadı.');
     }
 
     const { error } = await supabase.rpc('pay_to_bank', {
@@ -470,8 +469,7 @@ export const dataService = {
   async declareBankruptcy(roomId: string): Promise<void> {
     const sessionToken = getOrCreateSessionToken();
     if (!isSupabaseConfigured() || !supabase) {
-      mockStorage.declareBankruptcy(roomId, sessionToken);
-      return;
+      throw new Error('Supabase bağlantısı bulunamadı.');
     }
 
     const { error } = await supabase.rpc('declare_bankruptcy', {
