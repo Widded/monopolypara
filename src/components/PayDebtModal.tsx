@@ -95,18 +95,11 @@ export const PayDebtModal: React.FC<PayDebtModalProps> = ({
       return;
     }
 
-    setLoading(true);
-    try {
-      if (isSettlement) {
-        await onSettleDebt(currentDebt.id, amount);
-      } else {
-        await onPayDebt(currentDebt.id, amount);
-      }
-      onClose();
-    } catch (err: any) {
-      setError(err.message || 'İşlem başarısız.');
-    } finally {
-      setLoading(false);
+    onClose();
+    if (isSettlement) {
+      onSettleDebt(currentDebt.id, amount);
+    } else {
+      onPayDebt(currentDebt.id, amount);
     }
   };
 

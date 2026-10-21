@@ -83,41 +83,20 @@ export const dataService = {
     const sessionToken = getOrCreateSessionToken();
 
     if (isSupabaseConfigured() && supabase) {
-      // Fetch Room
-      const { data: room, error: roomErr } = await supabase
-        .from('rooms')
-        .select('*')
-        .eq('id', roomId)
-        .single();
-      if (roomErr || !room) return null;
+      // Parallel fetch for lightning-fast response (1 roundtrip instead of 4)
+      const [roomRes, playersRes, debtsRes, txRes] = await Promise.all([
+        supabase.from('rooms').select('*').eq('id', roomId).single(),
+        supabase.from('players').select('*').eq('room_id', roomId).order('created_at', { ascending: true }),
+        supabase.from('debts').select('*').eq('room_id', roomId).order('created_at', { ascending: false }),
+        supabase.from('transactions').select('*').eq('room_id', roomId).order('created_at', { ascending: false }).limit(50),
+      ]);
 
-      // Fetch Players
-      const { data: playersData } = await supabase
-        .from('players')
-        .select('*')
-        .eq('room_id', roomId)
-        .order('created_at', { ascending: true });
+      if (roomRes.error || !roomRes.data) return null;
 
-      const playersList: Player[] = playersData || [];
-
-      // Fetch Debts
-      const { data: debtsData } = await supabase
-        .from('debts')
-        .select('*')
-        .eq('room_id', roomId)
-        .order('created_at', { ascending: false });
-
-      const debtsList: Debt[] = debtsData || [];
-
-      // Fetch Transactions
-      const { data: txData } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('room_id', roomId)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      const txList: Transaction[] = txData || [];
+      const room = roomRes.data;
+      const playersList: Player[] = playersRes.data || [];
+      const debtsList: Debt[] = debtsRes.data || [];
+      const txList: Transaction[] = txRes.data || [];
 
       // Compute receivables and debts for each player
       const populatedPlayers = playersList.map(p => {

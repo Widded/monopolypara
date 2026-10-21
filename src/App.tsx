@@ -173,69 +173,191 @@ export const App: React.FC = () => {
   // Transfers
   const handleTransfer = async (fromId: string, toId: string, amount: number, description?: string) => {
     if (!roomId) return;
-    await dataService.transferMoney(roomId, fromId, toId, amount, description);
+
+    // 1. Anında 0ms yerel arayüz güncellemesi
+    setRoomState(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        players: prev.players.map(p => {
+          if (p.id === fromId) return { ...p, balance: p.balance - amount };
+          if (p.id === toId) return { ...p, balance: p.balance + amount };
+          return p;
+        }),
+        currentPlayer: prev.currentPlayer?.id === fromId
+          ? { ...prev.currentPlayer, balance: prev.currentPlayer.balance - amount }
+          : prev.currentPlayer?.id === toId
+          ? { ...prev.currentPlayer, balance: prev.currentPlayer.balance + amount }
+          : prev.currentPlayer,
+      };
+    });
     triggerConfetti();
     addToast('Para transferi başarıyla gerçekleşti.', 'success');
-    await refreshRoomState();
+
+    // 2. Arka planda sunucuya kaydet
+    try {
+      await dataService.transferMoney(roomId, fromId, toId, amount, description);
+      await refreshRoomState();
+    } catch (err: any) {
+      addToast(err.message || 'Transfer başarısız.', 'error');
+      await refreshRoomState();
+    }
   };
 
   // Lend Debt
   const handleLendDebt = async (creditorId: string, debtorId: string, amount: number, description?: string) => {
     if (!roomId) return;
-    await dataService.lendDebt(roomId, creditorId, debtorId, amount, description);
-    addToast('Borç teklifi gönderildi. Karşı tarafın onayı bekleniyor.', 'info');
-    await refreshRoomState();
+    try {
+      await dataService.lendDebt(roomId, creditorId, debtorId, amount, description);
+      addToast('Borç teklifi gönderildi. Karşı tarafın onayı bekleniyor.', 'info');
+      await refreshRoomState();
+    } catch (err: any) {
+      addToast(err.message || 'Borç verilemedi.', 'error');
+    }
   };
 
-  // Approve Debt (Recipient confirms)
+  // Approve Debt (Recipient confirms) - ANINDA 0ms GÜNCELLEME
   const handleApproveDebt = async (debtId: string) => {
     if (!roomId) return;
+
+    // 1. Anında arayüzde borcu onayla ve bakiyeyi artır (bekletme yok)
+    setRoomState(prev => {
+      if (!prev) return prev;
+      const target = prev.debts.find(d => d.id === debtId);
+      if (!target) return prev;
+      return {
+        ...prev,
+        debts: prev.debts.map(d => (d.id === debtId ? { ...d, status: 'active' } : d)),
+        players: prev.players.map(p => {
+          if (p.id === target.debtor_id) return { ...p, balance: p.balance + target.initial_amount };
+          if (p.id === target.creditor_id) return { ...p, balance: p.balance - target.initial_amount };
+          return p;
+        }),
+        currentPlayer: prev.currentPlayer?.id === target.debtor_id
+          ? { ...prev.currentPlayer, balance: prev.currentPlayer.balance + target.initial_amount }
+          : prev.currentPlayer?.id === target.creditor_id
+          ? { ...prev.currentPlayer, balance: prev.currentPlayer.balance - target.initial_amount }
+          : prev.currentPlayer,
+      };
+    });
+    triggerConfetti();
+    addToast('Borç teklifini onayladınız! Para hesabınıza aktarıldı.', 'success');
+
+    // 2. Arka planda RPC çalıştır ve senkronize et
     try {
       await dataService.approveDebt(roomId, debtId);
-      triggerConfetti();
-      addToast('Borç teklifini onayladınız! Para hesabınıza aktarıldı.', 'success');
       await refreshRoomState();
     } catch (err: any) {
       addToast(err.message || 'Borç onaylanamadı.', 'error');
+      await refreshRoomState();
     }
   };
 
-  // Reject / Cancel Debt Offer
+  // Reject / Cancel Debt Offer - ANINDA 0ms GÜNCELLEME
   const handleRejectDebt = async (debtId: string) => {
     if (!roomId) return;
+
+    // 1. Anında ekrandan kaldır
+    setRoomState(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        debts: prev.debts.map(d => (d.id === debtId ? { ...d, status: 'rejected' } : d)),
+      };
+    });
+    addToast('Borç teklifi iptal edildi / reddedildi.', 'info');
+
+    // 2. Arka planda sunucuya bildir
     try {
       await dataService.rejectDebt(roomId, debtId);
-      addToast('Borç teklifi iptal edildi / reddedildi.', 'info');
       await refreshRoomState();
     } catch (err: any) {
       addToast(err.message || 'İşlem başarısız.', 'error');
+      await refreshRoomState();
     }
   };
 
-  // Pay Debt
+  // Pay Debt - ANINDA 0ms GÜNCELLEME
   const handlePayDebt = async (debtId: string, amount: number) => {
     if (!roomId) return;
-    await dataService.payDebt(roomId, debtId, amount);
+
+    setRoomState(prev => {
+      if (!prev) return prev;
+      const target = prev.debts.find(d => d.id === debtId);
+      if (!target) return prev;
+      const newRemaining = Math.max(0, target.remaining_amount - amount);
+      return {
+        ...prev,
+        debts: prev.debts.map(d =>
+          d.id === debtId
+            ? {
+                ...d,
+                remaining_amount: newRemaining,
+                paid_amount: d.paid_amount + amount,
+                status: newRemaining === 0 ? 'settled' : 'partially_paid',
+              }
+            : d
+        ),
+        players: prev.players.map(p => {
+          if (p.id === target.debtor_id) return { ...p, balance: p.balance - amount };
+          if (p.id === target.creditor_id) return { ...p, balance: p.balance + amount };
+          return p;
+        }),
+        currentPlayer: prev.currentPlayer?.id === target.debtor_id
+          ? { ...prev.currentPlayer, balance: prev.currentPlayer.balance - amount }
+          : prev.currentPlayer?.id === target.creditor_id
+          ? { ...prev.currentPlayer, balance: prev.currentPlayer.balance + amount }
+          : prev.currentPlayer,
+      };
+    });
     triggerConfetti();
     addToast('Borç ödemesi başarıyla işlendi.', 'success');
-    await refreshRoomState();
+
+    try {
+      await dataService.payDebt(roomId, debtId, amount);
+      await refreshRoomState();
+    } catch (err: any) {
+      addToast(err.message || 'Borç ödenemedi.', 'error');
+      await refreshRoomState();
+    }
   };
 
   // Settle Debt
   const handleSettleDebt = async (debtId: string, agreedPayment: number) => {
     if (!roomId) return;
-    await dataService.settleDebt(roomId, debtId, agreedPayment);
-    triggerConfetti();
-    addToast('Borç anlaşmayla tamamen kapatıldı.', 'success');
-    await refreshRoomState();
+    try {
+      await dataService.settleDebt(roomId, debtId, agreedPayment);
+      triggerConfetti();
+      addToast('Borç anlaşmayla tamamen kapatıldı.', 'success');
+      await refreshRoomState();
+    } catch (err: any) {
+      addToast(err.message || 'Borç kapatılamadı.', 'error');
+    }
   };
 
-  // Banker Adjustment
+  // Banker Adjustment - ANINDA 0ms GÜNCELLEME
   const handleBankerAdjust = async (playerId: string, delta: number, description: string) => {
     if (!roomId) return;
-    await dataService.bankerAdjust(roomId, playerId, delta, description);
+
+    setRoomState(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        players: prev.players.map(p => (p.id === playerId ? { ...p, balance: p.balance + delta } : p)),
+        currentPlayer: prev.currentPlayer?.id === playerId
+          ? { ...prev.currentPlayer, balance: prev.currentPlayer.balance + delta }
+          : prev.currentPlayer,
+      };
+    });
     addToast('Bakiye düzeltmesi başarıyla uygulandı.', 'success');
-    await refreshRoomState();
+
+    try {
+      await dataService.bankerAdjust(roomId, playerId, delta, description);
+      await refreshRoomState();
+    } catch (err: any) {
+      addToast(err.message || 'Bakiye düzeltilemedi.', 'error');
+      await refreshRoomState();
+    }
   };
 
   // Shortcut triggers from PlayerCard or PlayerDetail
@@ -324,22 +446,26 @@ export const App: React.FC = () => {
           onReject={handleRejectDebt}
         />
 
-        {/* Players List */}
-        <div>
-          <div className="flex items-center justify-between mb-1.5 px-0.5">
-            <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">
-              Oyuncular ({players.length})
-            </span>
-          </div>
-
-          <PlayerList
-            players={players}
-            currentPlayer={currentPlayer}
-            onSendMoney={handleQuickSendMoney}
-            onSelectPlayer={(p) => setDetailPlayer(p)}
-            onCopyRoomCode={handleCopyRoomCode}
-          />
-        </div>
+        {/* Players & Wallet Area */}
+        <PlayerList
+          players={players}
+          currentPlayer={currentPlayer}
+          onSendMoney={handleQuickSendMoney}
+          onSelectPlayer={(p) => setDetailPlayer(p)}
+          onCopyRoomCode={handleCopyRoomCode}
+          onOpenTransfer={() => {
+            setPreSelectedReceiver(null);
+            setIsTransferOpen(true);
+          }}
+          onOpenLendDebt={() => {
+            setPreSelectedDebtor(null);
+            setIsLendOpen(true);
+          }}
+          onOpenPayDebt={() => {
+            setPreSelectedDebtId(null);
+            setIsPayOpen(true);
+          }}
+        />
       </main>
 
       {/* Bottom Sticky Action Dock */}

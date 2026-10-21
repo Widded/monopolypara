@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Shield, ChevronRight, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { Shield, ChevronRight, ArrowUpRight, ArrowDownLeft, Send } from 'lucide-react';
 import { Player } from '../types';
 import { formatMoney } from '../utils/formatters';
 
@@ -13,6 +13,7 @@ interface PlayerCardProps {
 export const PlayerCard: React.FC<PlayerCardProps> = ({
   player,
   isCurrentPlayer,
+  onSendMoney,
   onSelectPlayer,
 }) => {
   const prevBalanceRef = useRef(player.balance);
@@ -76,6 +77,19 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
+          {!isCurrentPlayer && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSendMoney(player);
+              }}
+              className="flex items-center gap-1 bg-accent/15 hover:bg-accent hover:text-bg-main text-accent border border-accent/30 text-[10px] font-bold px-2 py-0.5 rounded-md transition-all active:scale-95"
+            >
+              <Send className="w-2.5 h-2.5" />
+              Gönder
+            </button>
+          )}
           {player.recovery_pin && (
             <span
               className="text-[10px] font-mono font-bold text-text-muted/80 bg-bg-surface border border-border-subtle/80 px-1.5 py-0.5 rounded"

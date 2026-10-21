@@ -65,15 +65,8 @@ export const LendDebtModal: React.FC<LendDebtModalProps> = ({
       return;
     }
 
-    setLoading(true);
-    try {
-      await onLendDebt(currentPlayer.id, debtorId, amount);
-      onClose();
-    } catch (err: any) {
-      setError(err.message || 'Borç verilemedi.');
-    } finally {
-      setLoading(false);
-    }
+    onClose();
+    onLendDebt(currentPlayer.id, debtorId, amount);
   };
 
   return (

@@ -65,15 +65,8 @@ export const TransferModal: React.FC<TransferModalProps> = ({
       return;
     }
 
-    setLoading(true);
-    try {
-      await onTransfer(currentPlayer.id, receiverId, amount);
-      onClose();
-    } catch (err: any) {
-      setError(err.message || 'Transfer başarısız.');
-    } finally {
-      setLoading(false);
-    }
+    onClose();
+    onTransfer(currentPlayer.id, receiverId, amount);
   };
 
   return (
