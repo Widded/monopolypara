@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PlusCircle, LogIn, ArrowRight, AlertTriangle, Loader2, KeyRound, UserCheck } from 'lucide-react';
+import { resetSessionToken } from '../utils/formatters';
 
 interface WelcomeScreenProps {
   onCreateRoom: (playerName: string) => Promise<void>;
@@ -22,6 +23,22 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
   const quickNames = ['Ahmet', 'Mehmet', 'Ali', 'Ayşe', 'Zeynep', 'Can', 'Emre', 'Elif'];
 
+  // Link ile katılma desteği (?join=WID-12345 veya ?room=12345)
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const codeParam = params.get('join') || params.get('room');
+      if (codeParam) {
+        const clean = codeParam.replace(/\D/g, '');
+        if (clean) {
+          setRoomDigits(clean.slice(0, 5));
+          setMode('join');
+          setJoinType('new');
+        }
+      }
+    } catch {}
+  }, []);
+
   const handleCreate = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!playerName.trim()) {
@@ -31,6 +48,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     setLoading(true);
     setError(null);
     try {
+      resetSessionToken();
       await onCreateRoom(playerName.trim());
     } catch (err: any) {
       setError(err.message || 'Oda oluşturulamadı.');
@@ -58,6 +76,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           setLoading(false);
           return;
         }
+        resetSessionToken();
         await onJoinRoom(fullRoomCode, playerName.trim());
       } else {
         // Reconnect with recovery PIN

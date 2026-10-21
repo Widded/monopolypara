@@ -101,9 +101,22 @@ export const App: React.FC = () => {
     };
   }, [roomId, refreshRoomState]);
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      dataService.ensureConnection();
+      await refreshRoomState();
+      addToast('Oda ve oyuncular güncellendi.', 'info');
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 400);
+    }
+  };
+
   const isAnyModalOpen = isTransferOpen || isLendOpen || isPayOpen || isBankerOpen;
 
-  // 5 saniyede bir otomatik verileri yenile (Polling) + Ön plana gelindiğinde anında güncelle
+  // 2 saniyede bir otomatik verileri yenile (Polling) + Ön plana gelindiğinde anında güncelle
   useEffect(() => {
     if (!roomId) return;
 
@@ -117,13 +130,13 @@ export const App: React.FC = () => {
     window.addEventListener('focus', handleSync);
     window.addEventListener('pageshow', handleSync);
 
-    // Her 5 saniyede bir düzenli ve otomatik olarak tüm verileri güncelle
+    // Her 2 saniyede bir düzenli ve otomatik olarak tüm verileri güncelle
     // Kullanıcı bir modalda para/borç tutarı yazarken polling duraklatılır
     const interval = setInterval(() => {
       if (!isAnyModalOpen) {
         refreshRoomState();
       }
-    }, 5000);
+    }, 2000);
 
     return () => {
       document.removeEventListener('visibilitychange', handleSync);
@@ -424,6 +437,8 @@ export const App: React.FC = () => {
         currentPlayer={currentPlayer}
         playerCount={players.length}
         isLive={dataService.isLiveSupabase()}
+        isRefreshing={isRefreshing}
+        onRefresh={handleManualRefresh}
         onOpenBankerPanel={() => setIsBankerOpen(true)}
         onLeaveRoom={handleLeaveRoom}
       />

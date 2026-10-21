@@ -79,6 +79,13 @@ export function getOrCreateSessionToken(): string {
   return token;
 }
 
+export function resetSessionToken(): string {
+  const storageKey = 'monopoly_session_token';
+  const token = 'sess_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now().toString(36);
+  localStorage.setItem(storageKey, token);
+  return token;
+}
+
 /**
  * Transaction type display names in Turkish
  */

@@ -83,17 +83,28 @@ export const dataService = {
     const sessionToken = getOrCreateSessionToken();
 
     if (isSupabaseConfigured() && supabase) {
-      // Parallel fetch for lightning-fast response (1 roundtrip instead of 4)
-      const [roomRes, playersRes, debtsRes, txRes] = await Promise.all([
-        supabase.from('rooms').select('*').eq('id', roomId).single(),
-        supabase.from('players').select('*').eq('room_id', roomId).order('created_at', { ascending: true }),
-        supabase.from('debts').select('*').eq('room_id', roomId).order('created_at', { ascending: false }),
-        supabase.from('transactions').select('*').eq('room_id', roomId).order('created_at', { ascending: false }).limit(50),
-      ]);
+      // Odayı ID veya Kod ile bul
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(roomId);
+      let roomQuery = supabase.from('rooms').select('*');
+      if (isUuid) {
+        roomQuery = roomQuery.eq('id', roomId);
+      } else {
+        roomQuery = roomQuery.eq('code', roomId.trim().toUpperCase());
+      }
+      const roomRes = await roomQuery.maybeSingle();
 
       if (roomRes.error || !roomRes.data) return null;
 
       const room = roomRes.data;
+      const actualRoomId = room.id;
+
+      // Parallel fetch for lightning-fast response (1 roundtrip instead of 4)
+      const [playersRes, debtsRes, txRes] = await Promise.all([
+        supabase.from('players').select('*').eq('room_id', actualRoomId).order('created_at', { ascending: true }),
+        supabase.from('debts').select('*').eq('room_id', actualRoomId).order('created_at', { ascending: false }),
+        supabase.from('transactions').select('*').eq('room_id', actualRoomId).order('created_at', { ascending: false }).limit(50),
+      ]);
+
       const playersList: Player[] = playersRes.data || [];
       const debtsList: Debt[] = debtsRes.data || [];
       const txList: Transaction[] = txRes.data || [];
@@ -148,26 +159,38 @@ export const dataService = {
 
   subscribeToRoom(roomId: string, onChange: () => void): () => void {
     if (isSupabaseConfigured() && supabase) {
+      const channelId = `room_live_${roomId.replace(/-/g, '')}_${Math.random().toString(36).substring(2, 6)}`;
       const channel = supabase
-        .channel(`room_${roomId}`)
+        .channel(channelId)
         .on(
           'postgres_changes',
-          { event: '*', schema: 'public', table: 'players', filter: `room_id=eq.${roomId}` },
-          () => onChange()
+          { event: '*', schema: 'public', table: 'players' },
+          (payload: any) => {
+            if (!payload?.new?.room_id || payload.new.room_id === roomId || payload?.old?.room_id === roomId) {
+              onChange();
+            }
+          }
         )
         .on(
           'postgres_changes',
-          { event: '*', schema: 'public', table: 'transactions', filter: `room_id=eq.${roomId}` },
-          () => onChange()
+          { event: '*', schema: 'public', table: 'transactions' },
+          (payload: any) => {
+            if (!payload?.new?.room_id || payload.new.room_id === roomId || payload?.old?.room_id === roomId) {
+              onChange();
+            }
+          }
         )
         .on(
           'postgres_changes',
-          { event: '*', schema: 'public', table: 'debts', filter: `room_id=eq.${roomId}` },
-          () => onChange()
+          { event: '*', schema: 'public', table: 'debts' },
+          (payload: any) => {
+            if (!payload?.new?.room_id || payload.new.room_id === roomId || payload?.old?.room_id === roomId) {
+              onChange();
+            }
+          }
         )
         .subscribe((status) => {
           if (status === 'SUBSCRIBED') {
-            // Reconnected or newly connected -> pull fresh data immediately
             onChange();
           }
         });
