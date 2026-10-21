@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Copy, Check, RotateCw, Palette, Trophy } from 'lucide-react';
+import { Shield, Copy, Check, RotateCw, Palette, Trophy, Users } from 'lucide-react';
 import { Room, Player } from '../types';
 
 interface NavbarProps {
@@ -42,46 +42,65 @@ export const Navbar: React.FC<NavbarProps> = ({
     }
   };
 
+  const formattedCode = room.code.startsWith('WID-') ? room.code : `WID-${room.code}`;
+
   return (
-    <header className="shrink-0 z-30 bg-bg-main/95 backdrop-blur-md border-b border-border-subtle px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-3">
-      <div className="max-w-md mx-auto flex items-center justify-between gap-3">
-        {/* Sol: Oda Kodu Hapı + Yenileme & Tema & İstatistik Butonları */}
-        <div className="flex items-center gap-1.5 min-w-0">
-          {/* Oda Kodu Glass Pill */}
+    <header className="shrink-0 z-30 bg-[#0B0E14]/95 backdrop-blur-md border-b border-white/[0.06] px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-3">
+      <div className="max-w-md mx-auto flex items-center justify-between gap-2">
+        {/* Sol: Monopoly Logo + Ayırıcı | + Oda Kodu (Yeşil Işık + Kod + Kopyala) */}
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="font-black text-xl tracking-tight text-white select-none">
+            Monopoly
+          </span>
+
+          <span className="text-white/20 select-none text-xs font-light">|</span>
+
+          {/* Oda Kodu Minimal Butonu */}
           <button
             type="button"
             onClick={handleCopyCode}
-            className="flex items-center gap-1.5 bg-bg-surface hover:bg-bg-hover border border-border-subtle hover:border-border-active px-2.5 py-1 rounded-full transition-all active:scale-95 cursor-pointer group shadow-sm select-none"
+            className="flex items-center gap-1.5 py-1 px-1.5 rounded-lg hover:bg-white/[0.05] transition-all cursor-pointer group select-none"
             title={`Oda kodunu kopyala: ${room.code.replace(/^WID-?/i, '')}`}
           >
             <span
               className={`w-2 h-2 rounded-full shrink-0 transition-all ${
                 isLive
-                  ? 'bg-accent shadow-[0_0_8px_var(--accent)] animate-pulse'
-                  : 'bg-text-subtle'
+                  ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse'
+                  : 'bg-neutral-500'
               }`}
             />
-            <span className="font-mono text-xs font-bold text-text-muted group-hover:text-text-main tracking-wider">
-              <span className="opacity-45 text-[10px] font-normal mr-0.5">WID-</span>
-              {room.code.replace(/^WID-?/i, '')}
+            <span className="font-mono text-xs font-semibold text-neutral-300 group-hover:text-white tracking-wider">
+              {formattedCode}
             </span>
             {copied ? (
-              <Check className="w-3 h-3 text-accent" />
+              <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
             ) : (
-              <Copy className="w-3 h-3 text-text-subtle group-hover:text-text-muted transition-colors opacity-70" />
+              <Copy className="w-3.5 h-3.5 text-neutral-500 group-hover:text-neutral-300 transition-colors shrink-0" />
             )}
           </button>
+        </div>
 
-          {/* Manuel Yenile Butonu (Mobil için anında senkronize) */}
+        {/* Sağ: Oyuncu Sayacı + Bizim Üst Bar Butonları + Çıkış */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* Oyuncu Sayacı */}
+          <div
+            className="flex items-center gap-1.5 text-xs text-neutral-300 font-medium px-1.5 py-1"
+            title={`Masada ${playerCount} Oyuncu`}
+          >
+            <Users className="w-3.5 h-3.5 text-neutral-400" />
+            <span>{playerCount}</span>
+          </div>
+
+          {/* Manuel Yenile Butonu */}
           {onRefresh && (
             <button
               type="button"
               onClick={onRefresh}
               disabled={isRefreshing}
-              className="flex items-center justify-center w-7 h-7 rounded-full bg-bg-surface hover:bg-bg-hover border border-border-subtle hover:border-border-active text-text-muted hover:text-text-main transition-all active:scale-90 disabled:opacity-60 cursor-pointer"
+              className="flex items-center justify-center w-7 h-7 rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-neutral-400 hover:text-white transition-all active:scale-90 disabled:opacity-60 cursor-pointer"
               title="Odayı ve oyuncuları yenile"
             >
-              <RotateCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-accent' : ''}`} />
+              <RotateCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-emerald-400' : ''}`} />
             </button>
           )}
 
@@ -90,7 +109,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={onOpenThemeModal}
-              className="flex items-center justify-center w-7 h-7 rounded-full bg-bg-surface hover:bg-bg-hover border border-border-subtle hover:border-border-active text-text-muted hover:text-accent transition-all active:scale-90 cursor-pointer"
+              className="flex items-center justify-center w-7 h-7 rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-neutral-400 hover:text-emerald-400 transition-all active:scale-90 cursor-pointer"
               title="Renk Temasını Değiştir"
             >
               <Palette className="w-3.5 h-3.5" />
@@ -102,32 +121,30 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={onOpenStats}
-              className="flex items-center justify-center w-7 h-7 rounded-full bg-bg-surface hover:bg-bg-hover border border-border-subtle hover:border-border-active text-text-muted hover:text-amber-400 transition-all active:scale-90 cursor-pointer"
+              className="flex items-center justify-center w-7 h-7 rounded-full bg-white/[0.04] hover:bg-white/[0.08] text-neutral-400 hover:text-amber-400 transition-all active:scale-90 cursor-pointer"
               title="Masa İstatistikleri ve Liderlik"
             >
               <Trophy className="w-3.5 h-3.5" />
             </button>
           )}
-        </div>
 
-        {/* Sağ: Bankacı Paneli ve Çıkış Butonları */}
-        <div className="flex items-center gap-2 shrink-0">
+          {/* Bankacı Paneli Butonu */}
           {currentPlayer?.is_banker && (
             <button
               type="button"
               onClick={onOpenBankerPanel}
-              className="flex items-center gap-1.5 bg-amber-500/10 hover:bg-amber-500/20 active:scale-95 text-amber-300 border border-amber-500/30 text-xs font-semibold px-2.5 py-1 rounded-lg transition-all shadow-sm"
+              className="flex items-center justify-center w-7 h-7 rounded-full bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 transition-all active:scale-90 cursor-pointer"
               title="Banka Yönetim Paneli"
             >
-              <Shield className="w-3 h-3 text-amber-400" />
-              <span>Banka</span>
+              <Shield className="w-3.5 h-3.5" />
             </button>
           )}
 
+          {/* Çıkış */}
           <button
             type="button"
             onClick={onLeaveRoom}
-            className="text-xs text-text-muted hover:text-money-neg transition-colors py-1 px-1.5 font-medium rounded-lg hover:bg-white/[0.04]"
+            className="text-xs text-neutral-400 hover:text-white transition-colors py-1 px-1.5 font-medium ml-1 cursor-pointer select-none"
             title="Odadan Ayrıl"
           >
             Çıkış
@@ -137,4 +154,3 @@ export const Navbar: React.FC<NavbarProps> = ({
     </header>
   );
 };
-

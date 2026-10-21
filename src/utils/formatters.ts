@@ -52,6 +52,22 @@ export function formatTime(isoString: string): string {
 }
 
 /**
+ * Returns clean relative time in Turkish: e.g. "2 dk önce", "az önce"
+ */
+export function formatRelativeTime(isoString: string): string {
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  const diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (diffSec < 60) return 'az önce';
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin} dk önce`;
+  const diffHours = Math.floor(diffMin / 60);
+  if (diffHours < 24) return `${diffHours} sa önce`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays} gün önce`;
+}
+
+/**
  * Generates a clean, readable short room code with fixed WID- prefix and digits: e.g. WID-48291
  */
 export function generateRoomCode(): string {

@@ -1,7 +1,6 @@
 import React from 'react';
-import { History, ArrowRight, Wallet } from 'lucide-react';
 import { Transaction } from '../types';
-import { formatMoney } from '../utils/formatters';
+import { formatMoney, formatRelativeTime } from '../utils/formatters';
 
 interface SummaryCardProps {
   playerCount: number;
@@ -11,79 +10,62 @@ interface SummaryCardProps {
 }
 
 export const SummaryCard: React.FC<SummaryCardProps> = ({
-  playerCount,
   totalCash,
   lastTransaction,
   onOpenHistory,
 }) => {
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-bg-card border border-border-subtle p-4 shadow-xl shadow-black/40">
-      {/* İnce ambient köşe parıltısı */}
-      <div className="absolute top-0 right-0 w-36 h-36 bg-accent/[0.04] rounded-full blur-2xl pointer-events-none" />
-
-      {/* Üst Kısım: Masa Toplamı */}
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-accent mb-1">
-            <Wallet className="w-3 h-3 text-accent" />
-            <span>Masa Nakit Havuzu</span>
-          </div>
-          <div className="font-money font-extrabold text-[28px] sm:text-3xl tracking-tight text-text-main leading-none">
+    <div className="pt-2 pb-4 border-b border-white/[0.08]">
+      <div className="flex items-center justify-between gap-4">
+        {/* Sol Kolon: Toplam Nakit */}
+        <div className="flex-1 min-w-0 pr-2">
+          <span className="text-xs text-neutral-400 font-medium block">
+            Toplam Nakit
+          </span>
+          <div className="text-3xl sm:text-[32px] font-extrabold text-white tracking-tight font-mono leading-tight mt-1 truncate">
             {formatMoney(totalCash)}
           </div>
         </div>
 
-        <div className="bg-bg-surface border border-border-subtle rounded-xl px-2.5 py-1 text-right shrink-0">
-          <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider block">
-            Masada
-          </span>
-          <span className="text-xs font-bold text-text-main">
-            {playerCount} Oyuncu
-          </span>
-        </div>
-      </div>
+        {/* Dikey İnce Bölücü Çizgi */}
+        <div className="w-[1px] bg-white/[0.08] self-stretch my-1 shrink-0" />
 
-      {/* Alt Kısım: Son İşlem Ticker Şeridi */}
-      <div className="mt-3.5 pt-2.5 border-t border-border-subtle flex items-center justify-between gap-2 text-xs">
+        {/* Sağ Kolon: Son İşlem */}
         <button
           type="button"
           onClick={onOpenHistory}
-          className="flex-1 flex items-center gap-1.5 min-w-0 text-left group cursor-pointer hover:opacity-90 transition-opacity"
-          title="Tüm işlem geçmişini aç"
+          className="flex-1 min-w-0 pl-2 text-left group cursor-pointer select-none focus:outline-none"
+          title="Tüm işlem geçmişini gör"
         >
-          <span className="text-[10px] font-bold text-text-subtle uppercase tracking-wider shrink-0">
-            Son İşlem:
+          <span className="text-xs text-neutral-400 font-medium block">
+            Son İşlem
           </span>
+
           {lastTransaction ? (
-            <div className="text-xs text-text-muted group-hover:text-text-main transition-colors truncate">
-              <span className="font-semibold text-text-main">
-                {lastTransaction.from_player_name || 'Oyuncu'}
+            <div className="mt-1 min-w-0">
+              <div className="text-sm font-semibold text-white truncate flex items-center gap-1">
+                <span className="truncate max-w-[70px] sm:max-w-[85px]">
+                  {lastTransaction.from_player_name || 'Oyuncu'}
+                </span>
+                <span className="text-neutral-500 text-xs shrink-0">→</span>
+                <span className="truncate max-w-[70px] sm:max-w-[85px]">
+                  {lastTransaction.to_player_name || 'Oyuncu'}
+                </span>
+                <span className="text-emerald-400 font-bold ml-0.5 shrink-0 font-mono">
+                  {formatMoney(lastTransaction.amount)}
+                </span>
+              </div>
+              <span className="text-[11px] text-neutral-500 block mt-0.5">
+                {formatRelativeTime(lastTransaction.created_at)}
               </span>
-              <span className="text-text-subtle mx-1">→</span>
-              <span className="font-semibold text-text-main">
-                {lastTransaction.to_player_name || 'Oyuncu'}
-              </span>{' '}
-              <strong className="font-money font-bold text-money-pos ml-0.5">
-                {formatMoney(lastTransaction.amount)}
-              </strong>
             </div>
           ) : (
-            <span className="text-xs text-text-subtle">Henüz işlem yapılmadı</span>
+            <div className="text-xs text-neutral-500 mt-1">
+              Henüz işlem yok
+            </div>
           )}
-        </button>
-
-        <button
-          type="button"
-          onClick={onOpenHistory}
-          className="flex items-center gap-1 text-[11px] font-semibold text-text-muted hover:text-text-main transition-colors shrink-0 py-0.5 px-1.5 rounded-md hover:bg-bg-surface"
-        >
-          <History className="w-3 h-3 text-text-subtle" />
-          <span>Geçmiş</span>
-          <ArrowRight className="w-3 h-3 text-text-subtle" />
         </button>
       </div>
     </div>
   );
 };
-
-
