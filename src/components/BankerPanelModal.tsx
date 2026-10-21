@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Shield, Plus, Minus, AlertTriangle, Loader2 } from 'lucide-react';
+import { X, Shield, Plus, Minus, AlertTriangle, Loader2, Trophy } from 'lucide-react';
 import { Player, Room, Transaction } from '../types';
 import { formatMoney } from '../utils/formatters';
 import { Keypad } from './Keypad';
@@ -12,6 +12,7 @@ interface BankerPanelModalProps {
   transactions: Transaction[];
   onAdjustBalance: (playerId: string, delta: number, description: string) => Promise<void>;
   onOpenHistory: () => void;
+  onOpenStats?: () => void;
 }
 
 export const BankerPanelModal: React.FC<BankerPanelModalProps> = ({
@@ -19,6 +20,7 @@ export const BankerPanelModal: React.FC<BankerPanelModalProps> = ({
   onClose,
   players,
   onAdjustBalance,
+  onOpenStats,
 }) => {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>(players[0]?.id || '');
   const [operationType, setOperationType] = useState<'add' | 'deduct'>('add');
@@ -209,6 +211,23 @@ export const BankerPanelModal: React.FC<BankerPanelModalProps> = ({
               )}
             </button>
           </form>
+
+          {/* Masa İstatistikleri & Oyunu Bitir */}
+          {onOpenStats && (
+            <div className="pt-2.5 border-t border-border-subtle mt-3">
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenStats();
+                }}
+                className="w-full py-2 px-3 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <Trophy className="w-3.5 h-3.5 text-amber-400" />
+                <span>Masa İstatistikleri ve Oyunu Bitir</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

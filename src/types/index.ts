@@ -5,7 +5,8 @@ export type TransactionType =
   | 'debt_settlement' 
   | 'banker_adjust'
   | 'bank_payment'
-  | 'bankruptcy';
+  | 'bankruptcy'
+  | 'reversal';
 
 export type DebtStatus = 'pending' | 'rejected' | 'active' | 'partially_paid' | 'settled';
 
@@ -74,6 +75,7 @@ export interface Transaction {
   to_player_id?: string | null;
   amount: number;
   description?: string;
+  is_reversed?: boolean;
   created_at: string;
   // Populated fields for UI
   from_player_name?: string;

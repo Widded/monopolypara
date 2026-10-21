@@ -8,13 +8,14 @@ interface PlayerDetailModalProps {
   onClose: () => void;
   player: Player | null;
   currentPlayer: Player;
+  players?: Player[];
   debts: Debt[];
   transactions: Transaction[];
   onOpenTransfer: (targetPlayer: Player) => void;
   onOpenLend: (targetPlayer: Player) => void;
   onOpenPayDebt: (debtId?: string) => void;
   onOpenDebtDetail?: (debt: Debt) => void;
-  onDeclareBankruptcy?: () => void;
+  onDeclareBankruptcy?: (beneficiaryId?: string | null) => void;
 }
 
 export const PlayerDetailModal: React.FC<PlayerDetailModalProps> = ({
@@ -22,6 +23,7 @@ export const PlayerDetailModal: React.FC<PlayerDetailModalProps> = ({
   onClose,
   player,
   currentPlayer,
+  players = [],
   debts,
   onOpenTransfer,
   onOpenLend,
@@ -29,10 +31,12 @@ export const PlayerDetailModal: React.FC<PlayerDetailModalProps> = ({
   onDeclareBankruptcy,
 }) => {
   const [confirmBankruptcy, setConfirmBankruptcy] = useState(false);
+  const [beneficiaryTarget, setBeneficiaryTarget] = useState<string>('bank');
 
   useEffect(() => {
     if (!isOpen) {
       setConfirmBankruptcy(false);
+      setBeneficiaryTarget('bank');
     }
   }, [isOpen]);
 
@@ -175,7 +179,7 @@ export const PlayerDetailModal: React.FC<PlayerDetailModalProps> = ({
               <button
                 type="button"
                 onClick={() => setConfirmBankruptcy(true)}
-                className="w-full py-2 px-3 rounded-lg border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                className="w-full py-2 px-3 rounded-lg border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
                 <Skull className="w-3.5 h-3.5" />
                 <span>İflas Bildir (Masadan Çekil)</span>
@@ -184,16 +188,51 @@ export const PlayerDetailModal: React.FC<PlayerDetailModalProps> = ({
               <div className="p-3 rounded-xl border border-red-500/40 bg-red-950/30 space-y-2.5 animate-in fade-in duration-150">
                 <div className="flex items-start gap-2">
                   <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-                  <p className="text-[11px] text-text-subtle leading-relaxed">
-                    <strong className="text-red-400 font-semibold block mb-0.5">İflas etmek üzeresiniz!</strong>
-                    Nakit bakiyeniz sıfırlanır, tüm borç ve alacaklarınız kapanır ve oyundan elenirsiniz. Bu işlem geri alınamaz!
-                  </p>
+                  <div className="space-y-1 flex-1 min-w-0">
+                    <strong className="text-red-400 font-semibold block text-xs">İflas ve Varlık Devri</strong>
+                    <p className="text-[11px] text-text-subtle leading-relaxed">
+                      Borcunuzu ödeyemediğiniz için iflas bildireceksiniz. Kalan tüm paranız seçtiğiniz alacaklıya aktarılır ve oyundan elenirsiniz.
+                    </p>
+                  </div>
                 </div>
+
+                <div>
+                  <label className="block text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-1">
+                    Varlığınız Kime Aktarılacak?
+                  </label>
+                  <select
+                    value={beneficiaryTarget}
+                    onChange={e => setBeneficiaryTarget(e.target.value)}
+                    className="input-field py-1.5 px-2 text-xs w-full bg-bg-surface border-border-subtle"
+                  >
+                    <option value="bank">🏛️ Banka Kasası (Vergi / Ceza)</option>
+                    {players
+                      .filter(p => p.id !== player.id && !p.is_bankrupt && p.is_online !== false)
+                      .map(p => (
+                        <option key={p.id} value={p.id}>
+                          👤 {p.name} (Kira / Tapu Alacaklısı)
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                <div className="p-2 rounded-lg bg-bg-surface/60 border border-border-subtle text-[11px] text-text-muted">
+                  {beneficiaryTarget === 'bank' ? (
+                    <span>
+                      Kalan <strong className="font-money text-accent">{formatMoney(player.balance)}</strong> tutarındaki bakiyeniz <strong>Banka Kasasına</strong> devredilecek.
+                    </span>
+                  ) : (
+                    <span>
+                      Kalan <strong className="font-money text-accent">{formatMoney(player.balance)}</strong> tutarındaki bakiyeniz <strong>{players.find(p => p.id === beneficiaryTarget)?.name || 'seçilen oyuncuya'}</strong> devredilecek.
+                    </span>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-2 gap-2 pt-1">
                   <button
                     type="button"
                     onClick={() => setConfirmBankruptcy(false)}
-                    className="py-1.5 px-3 rounded-lg border border-border-subtle bg-bg-surface hover:bg-white/[0.05] text-text-muted text-xs font-medium"
+                    className="py-1.5 px-3 rounded-lg border border-border-subtle bg-bg-surface hover:bg-white/[0.05] text-text-muted text-xs font-medium cursor-pointer"
                   >
                     Vazgeç
                   </button>
@@ -202,12 +241,12 @@ export const PlayerDetailModal: React.FC<PlayerDetailModalProps> = ({
                     onClick={() => {
                       setConfirmBankruptcy(false);
                       onClose();
-                      onDeclareBankruptcy();
+                      onDeclareBankruptcy(beneficiaryTarget === 'bank' ? null : beneficiaryTarget);
                     }}
-                    className="py-1.5 px-3 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-bold flex items-center justify-center gap-1 shadow-md shadow-red-950/50"
+                    className="py-1.5 px-3 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-bold flex items-center justify-center gap-1 shadow-md shadow-red-950/50 cursor-pointer"
                   >
                     <Skull className="w-3.5 h-3.5" />
-                    <span>Evet, İflas Et</span>
+                    <span>İflası Onayla</span>
                   </button>
                 </div>
               </div>

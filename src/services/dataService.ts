@@ -466,7 +466,7 @@ export const dataService = {
     }
   },
 
-  async declareBankruptcy(roomId: string): Promise<void> {
+  async declareBankruptcy(roomId: string, beneficiaryId?: string | null): Promise<void> {
     const sessionToken = getOrCreateSessionToken();
     if (!isSupabaseConfigured() || !supabase) {
       throw new Error('Supabase bağlantısı bulunamadı.');
@@ -475,10 +475,45 @@ export const dataService = {
     const { error } = await supabase.rpc('declare_bankruptcy', {
       p_room_id: roomId,
       p_session_token: sessionToken,
+      p_beneficiary_id: beneficiaryId || null,
     });
 
     if (error) {
       throw new Error(error.message || 'İflas işlemi gerçekleştirilemedi.');
+    }
+  },
+
+  async reverseTransaction(roomId: string, transactionId: string): Promise<void> {
+    const sessionToken = getOrCreateSessionToken();
+    if (!isSupabaseConfigured() || !supabase) {
+      throw new Error('Supabase bağlantısı bulunamadı.');
+    }
+
+    const { error } = await supabase.rpc('reverse_transaction', {
+      p_room_id: roomId,
+      p_session_token: sessionToken,
+      p_transaction_id: transactionId,
+    });
+
+    if (error) {
+      throw new Error(error.message || 'İşlem geri alınamadı.');
+    }
+  },
+
+  async endGame(roomId: string, status: 'active' | 'ended' = 'ended'): Promise<void> {
+    const sessionToken = getOrCreateSessionToken();
+    if (!isSupabaseConfigured() || !supabase) {
+      throw new Error('Supabase bağlantısı bulunamadı.');
+    }
+
+    const { error } = await supabase.rpc('end_room_game', {
+      p_room_id: roomId,
+      p_session_token: sessionToken,
+      p_status: status,
+    });
+
+    if (error) {
+      throw new Error(error.message || 'Oyun durumu güncellenemedi.');
     }
   }
 };

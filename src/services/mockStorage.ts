@@ -490,34 +490,34 @@ export const mockStorage = {
     saveData(data);
   },
 
-  declareBankruptcy(roomId: string, sessionToken: string) {
+  declareBankruptcy(roomId: string, sessionToken: string, beneficiaryId?: string | null) {
     const data = loadData();
     const player = Object.values(data.players).find(p => p.room_id === roomId && p.session_token === sessionToken);
     if (!player) throw new Error('Oyuncu bulunamadı.');
     if (player.is_bankrupt) throw new Error('Bu oyuncu zaten iflas etmiş.');
 
-    let cash = player.balance;
-    const playerDebts = Object.values(data.debts).filter(
-      d => d.debtor_id === player.id && (d.status === 'active' || d.status === 'partially_paid')
-    );
-    for (const d of playerDebts) {
-      if (cash > 0) {
-        const pay = Math.min(cash, d.remaining_amount);
-        const creditor = data.players[d.creditor_id];
-        if (creditor) creditor.balance += pay;
-        cash -= pay;
-      }
-      d.status = 'settled';
-      d.remaining_amount = 0;
-      d.description = (d.description || '') + ' (İflas ile kapatıldı)';
+    const cash = player.balance;
+    let desc = `${player.name} Bankaya iflas etti ve oyundan çekildi.`;
+    let targetId: string | null = null;
+
+    if (beneficiaryId) {
+      if (beneficiaryId === player.id) throw new Error('Kendinize iflas edemezsiniz.');
+      const beneficiary = data.players[beneficiaryId];
+      if (!beneficiary || beneficiary.room_id !== roomId) throw new Error('Hedef oyuncu bulunamadı.');
+      if (beneficiary.is_bankrupt) throw new Error('İflas etmiş bir oyuncuya varlık aktarılamaz.');
+
+      beneficiary.balance += cash;
+      targetId = beneficiary.id;
+      desc = `${player.name}, ${beneficiary.name}'e iflas etti. Kalan tüm parası (${cash} ₺) ${beneficiary.name}'e aktarıldı.`;
     }
 
+    // Açık borçları kapat
     Object.values(data.debts)
-      .filter(d => d.creditor_id === player.id && (d.status === 'active' || d.status === 'partially_paid' || d.status === 'pending'))
+      .filter(d => (d.debtor_id === player.id || d.creditor_id === player.id) && d.status !== 'settled')
       .forEach(d => {
         d.status = 'settled';
         d.remaining_amount = 0;
-        d.description = (d.description || '') + ' (Alacaklı iflas ettiği için silindi)';
+        d.description = (d.description || '') + ' (İflas ile kapatıldı)';
       });
 
     player.balance = 0;
@@ -530,11 +530,80 @@ export const mockStorage = {
       room_id: roomId,
       type: 'bankruptcy',
       from_player_id: player.id,
-      to_player_id: null,
-      amount: 0,
-      description: `${player.name} iflas etti ve oyundan çekildi.`,
+      to_player_id: targetId,
+      amount: cash,
+      description: desc,
       created_at: new Date().toISOString(),
     };
     saveData(data);
+  },
+
+  reverseTransaction(roomId: string, sessionToken: string, transactionId: string) {
+    const data = loadData();
+    const banker = Object.values(data.players).find(p => p.room_id === roomId && p.session_token === sessionToken && p.is_banker);
+    if (!banker) throw new Error('Bu işlemi yalnızca bankacı yetkisine sahip oyuncu geri alabilir.');
+
+    const tx = data.transactions[transactionId];
+    if (!tx || tx.room_id !== roomId) throw new Error('İşlem kaydı bulunamadı.');
+    if (tx.is_reversed) throw new Error('Bu işlem zaten daha önce geri alınmış.');
+    if (tx.type !== 'transfer' && tx.type !== 'bank_payment' && tx.type !== 'banker_adjust') {
+      throw new Error('Yalnızca transfer, banka ödemesi ve bankacı düzeltmeleri geri alınabilir.');
+    }
+
+    if (tx.type === 'transfer') {
+      const fromPlayer = data.players[tx.from_player_id!];
+      const toPlayer = data.players[tx.to_player_id!];
+      if (!fromPlayer || !toPlayer) throw new Error('İlgili oyuncular bulunamadı.');
+      if (toPlayer.balance < tx.amount) {
+        throw new Error(`Alıcının mevcut bakiyesi (${toPlayer.balance} ₺) iade edilecek tutardan (${tx.amount} ₺) az olduğu için geri alınamaz.`);
+      }
+      toPlayer.balance -= tx.amount;
+      fromPlayer.balance += tx.amount;
+    } else if (tx.type === 'bank_payment') {
+      const fromPlayer = data.players[tx.from_player_id!];
+      if (!fromPlayer) throw new Error('Oyuncu bulunamadı.');
+      fromPlayer.balance += tx.amount;
+    } else if (tx.type === 'banker_adjust') {
+      if (tx.to_player_id) {
+        const toPlayer = data.players[tx.to_player_id];
+        if (toPlayer) {
+          if (toPlayer.balance < tx.amount) throw new Error('Oyuncu bakiyesi yetersiz.');
+          toPlayer.balance -= tx.amount;
+        }
+      } else if (tx.from_player_id) {
+        const fromPlayer = data.players[tx.from_player_id];
+        if (fromPlayer) fromPlayer.balance += tx.amount;
+      }
+    }
+
+    tx.is_reversed = true;
+
+    const revId = 'tx_' + Math.random().toString(36).substring(2, 9);
+    data.transactions[revId] = {
+      id: revId,
+      room_id: roomId,
+      type: 'reversal',
+      from_player_id: tx.to_player_id,
+      to_player_id: tx.from_player_id,
+      amount: tx.amount,
+      description: `İptal: Bankacı işlemi geri aldı (${tx.description || 'İşlem'} - ${tx.amount} ₺ iade edildi)`,
+      created_at: new Date().toISOString(),
+      is_reversed: false,
+    };
+
+    saveData(data);
+    return data.transactions[revId];
+  },
+
+  endGame(roomId: string, sessionToken: string, status: 'active' | 'ended' = 'ended') {
+    const data = loadData();
+    const banker = Object.values(data.players).find(p => p.room_id === roomId && p.session_token === sessionToken && p.is_banker);
+    if (!banker) throw new Error('Yalnızca bankacı oyunu bitirebilir.');
+
+    const room = data.rooms[roomId];
+    if (!room) throw new Error('Oda bulunamadı.');
+    room.status = status;
+    saveData(data);
+    return room;
   }
 };

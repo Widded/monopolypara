@@ -97,4 +97,5 @@ export const TRANSACTION_TYPE_LABELS: Record<string, string> = {
   banker_adjust: 'Banka / Düzeltme',
   bank_payment: 'Bankaya Ödeme',
   bankruptcy: 'İflas',
+  reversal: 'İşlem İptali',
 };

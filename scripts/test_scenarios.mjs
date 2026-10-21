@@ -163,10 +163,14 @@ const mock = {
     saveData(data);
   },
 
-  declareBankruptcy(roomId, playerId) {
+  declareBankruptcy(roomId, playerId, beneficiaryId) {
     const data = loadData();
     const player = data.players[playerId];
     if (player.is_bankrupt) throw new Error('Zaten iflas etmiş');
+    const cash = player.balance;
+    if (beneficiaryId && data.players[beneficiaryId]) {
+      data.players[beneficiaryId].balance += cash;
+    }
     player.balance = 0;
     player.is_bankrupt = true;
     player.is_online = false;
@@ -178,8 +182,26 @@ const mock = {
       }
     });
     const txId = 'tx_' + Math.random().toString(36).substring(2, 7);
-    data.transactions[txId] = { id: txId, room_id: roomId, type: 'bankruptcy', from_player_id: playerId, to_player_id: null, amount: 0, description: player.name + ' iflas etti', created_at: new Date().toISOString() };
+    data.transactions[txId] = { id: txId, room_id: roomId, type: 'bankruptcy', from_player_id: playerId, to_player_id: beneficiaryId || null, amount: cash, description: player.name + ' iflas etti', created_at: new Date().toISOString() };
     saveData(data);
+  },
+
+  reverseTransaction(roomId, txId) {
+    const data = loadData();
+    const tx = data.transactions[txId];
+    if (!tx || tx.is_reversed) throw new Error('İşlem bulunamadı veya zaten geri alınmış');
+    if (tx.type === 'transfer') {
+      const fromP = data.players[tx.from_player_id];
+      const toP = data.players[tx.to_player_id];
+      if (toP.balance < tx.amount) throw new Error('Alıcı bakiyesi yetersiz');
+      toP.balance -= tx.amount;
+      fromP.balance += tx.amount;
+    }
+    tx.is_reversed = true;
+    const revId = 'tx_rev_' + Math.random().toString(36).substring(2, 7);
+    data.transactions[revId] = { id: revId, room_id: roomId, type: 'reversal', from_player_id: tx.to_player_id, to_player_id: tx.from_player_id, amount: tx.amount, description: 'İşlem geri alındı', created_at: new Date().toISOString(), is_reversed: false };
+    saveData(data);
+    return revId;
   }
 };
 
@@ -318,4 +340,45 @@ mehmetDebts.forEach(d => {
 });
 console.log('✓ Senaryo 15: Mehmet iflas bildirdi; nakit sıfırlandı, tüm borçları kapatıldı, oyundan elendi.');
 
-console.log('\n--- TÜM TEST SENARYOLARI (1-15) EKSİKSİZ VE BAŞARIYLA GEÇTİ! ---');
+// Senaryo 16: Alacaklı Oyuncuya İflas (Varlık Devri)
+const canPlayer = { id: 'player_can', room_id: room.id, name: 'Can', balance: 300, is_banker: false, session_token: 'sess_can' };
+const currentData = loadData();
+currentData.players[canPlayer.id] = canPlayer;
+saveData(currentData);
+
+const ahmetBalanceBeforeCan = loadData().players[ahmet.id].balance;
+// Can, Ahmet'e iflas bildirir (Kalan 300 ₺ Ahmet'e geçmeli)
+mock.declareBankruptcy(room.id, canPlayer.id, ahmet.id);
+
+assert.strictEqual(loadData().players[canPlayer.id].balance, 0, 'Can bakiyesi 0 olmalı');
+assert.strictEqual(loadData().players[canPlayer.id].is_bankrupt, true, 'Can iflas etmiş olmalı');
+assert.strictEqual(loadData().players[ahmet.id].balance, ahmetBalanceBeforeCan + 300, 'Ahmet kalan 300 ₺ varlığı devralmalı');
+console.log('✓ Senaryo 16: Can, Ahmet\'e iflas etti; kalan tüm 300 ₺ varlığı başarıyla Ahmet\'e devredildi!');
+
+// Senaryo 17: Hatalı İşlemi Geri Alma (Reverse Transaction)
+const salihPlayer = { id: 'player_salih', room_id: room.id, name: 'Salih', balance: 1000, is_banker: false, session_token: 'sess_salih' };
+const dataWithSalih = loadData();
+dataWithSalih.players[salihPlayer.id] = salihPlayer;
+saveData(dataWithSalih);
+
+const ahmetPreSend = loadData().players[ahmet.id].balance;
+const salihPreSend = loadData().players[salihPlayer.id].balance;
+
+// Ahmet yanlışlıkla Salih'e 250 ₺ gönderir
+mock.transferMoney(room.id, ahmet.id, salihPlayer.id, 250, 'Yanlışlıkla gönderilen transfer');
+assert.strictEqual(loadData().players[ahmet.id].balance, ahmetPreSend - 250);
+assert.strictEqual(loadData().players[salihPlayer.id].balance, salihPreSend + 250);
+
+// Son işlemi bul ve bankacı olarak geri al
+const mistakeTx = Object.values(loadData().transactions).find(t => t.description === 'Yanlışlıkla gönderilen transfer');
+assert.ok(mistakeTx, 'Transfer işlemi bulunmalı');
+
+mock.reverseTransaction(room.id, mistakeTx.id);
+
+// Bakiyeler orijinal haline dönmeli
+assert.strictEqual(loadData().players[ahmet.id].balance, ahmetPreSend, 'Ahmet\'in parası eksiksiz iade edilmiş olmalı');
+assert.strictEqual(loadData().players[salihPlayer.id].balance, salihPreSend, 'Salih\'ten fazla para geri çekilmiş olmalı');
+assert.strictEqual(loadData().transactions[mistakeTx.id].is_reversed, true, 'Orijinal işlem is_reversed=true olarak işaretlenmeli');
+console.log('✓ Senaryo 17: Bankacı hatalı işlemi geçmişten geri aldı; 250 ₺ gönderene başarıyla iade edildi!');
+
+console.log('\n--- TÜM TEST SENARYOLARI (1-17) EKSİKSİZ VE BAŞARIYLA GEÇTİ! ---');

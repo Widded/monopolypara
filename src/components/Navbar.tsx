@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Copy, Check, RotateCw, Palette } from 'lucide-react';
+import { Shield, Copy, Check, RotateCw, Palette, Trophy } from 'lucide-react';
 import { Room, Player } from '../types';
 
 interface NavbarProps {
@@ -12,6 +12,7 @@ interface NavbarProps {
   onOpenBankerPanel: () => void;
   onLeaveRoom: () => void;
   onOpenThemeModal?: () => void;
+  onOpenStats?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -24,6 +25,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenBankerPanel,
   onLeaveRoom,
   onOpenThemeModal,
+  onOpenStats,
 }) => {
   const [copied, setCopied] = useState(false);
 
@@ -96,6 +98,18 @@ export const Navbar: React.FC<NavbarProps> = ({
               title="Renk Temasını Değiştir"
             >
               <Palette className="w-3.5 h-3.5" />
+            </button>
+          )}
+
+          {/* Masa İstatistikleri & Liderlik Butonu */}
+          {onOpenStats && (
+            <button
+              type="button"
+              onClick={onOpenStats}
+              className="flex items-center justify-center w-7 h-7 rounded-full bg-bg-surface hover:bg-bg-hover border border-border-subtle hover:border-border-active text-text-muted hover:text-amber-400 transition-all active:scale-90 cursor-pointer"
+              title="Masa İstatistikleri ve Liderlik"
+            >
+              <Trophy className="w-3.5 h-3.5" />
             </button>
           )}
         </div>

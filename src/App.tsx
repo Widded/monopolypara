@@ -15,6 +15,7 @@ import { BankerPanelModal } from './components/BankerPanelModal';
 import { PlayerDetailModal } from './components/PlayerDetailModal';
 import { HistoryViewModal } from './components/HistoryViewModal';
 import { ThemeModal } from './components/ThemeModal';
+import { GameStatsModal } from './components/GameStatsModal';
 import { PendingDebtBanner } from './components/PendingDebtBanner';
 import { Toast, ToastMessage } from './components/Toast';
 
@@ -40,6 +41,7 @@ export const App: React.FC = () => {
 
   const [isBankerOpen, setIsBankerOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isStatsOpen, setIsStatsOpen] = useState(false);
 
   const [detailPlayer, setDetailPlayer] = useState<Player | null>(null);
   const [detailDebt, setDetailDebt] = useState<Debt | null>(null);
@@ -430,14 +432,49 @@ export const App: React.FC = () => {
   };
 
   // Declare Bankruptcy
-  const handleDeclareBankruptcy = async () => {
+  const handleDeclareBankruptcy = async (beneficiaryId?: string | null) => {
     if (!roomId) return;
     try {
-      await dataService.declareBankruptcy(roomId);
-      addToast('İflas bildirdiniz. Masadan çekildiniz.', 'info');
+      await dataService.declareBankruptcy(roomId, beneficiaryId);
+      addToast('İflas bildirildi ve varlıklar devredildi.', 'info');
       await refreshRoomState();
     } catch (err: any) {
       addToast(err.message || 'İflas işlemi başarısız.', 'error');
+    }
+  };
+
+  // Reverse Transaction (Banker only)
+  const handleReverseTransaction = async (transactionId: string) => {
+    if (!roomId) return;
+    try {
+      await dataService.reverseTransaction(roomId, transactionId);
+      addToast('Hatalı işlem başarıyla geri alındı!', 'success');
+      await refreshRoomState();
+    } catch (err: any) {
+      addToast(err.message || 'İşlem geri alınamadı.', 'error');
+      throw err;
+    }
+  };
+
+  // End / Resume Game (Banker only)
+  const handleEndGame = async (status: 'ended' | 'active') => {
+    if (!roomId) return;
+    try {
+      await dataService.endGame(roomId, status);
+      if (status === 'ended') {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+        });
+        addToast('Oyun resmen tamamlandı! Şampiyon ilan edildi 🏆', 'success');
+      } else {
+        addToast('Oyun devam ediyor 🟢', 'info');
+      }
+      await refreshRoomState();
+    } catch (err: any) {
+      addToast(err.message || 'Oyun durumu güncellenemedi.', 'error');
+      throw err;
     }
   };
 
@@ -519,6 +556,7 @@ export const App: React.FC = () => {
         onOpenBankerPanel={() => setIsBankerOpen(true)}
         onLeaveRoom={handleLeaveRoom}
         onOpenThemeModal={() => setIsThemeOpen(true)}
+        onOpenStats={() => setIsStatsOpen(true)}
       />
 
       {/* Main Content Area - Scrollable viewport starting cleanly at top */}
@@ -621,6 +659,7 @@ export const App: React.FC = () => {
         onClose={() => setDetailPlayer(null)}
         player={detailPlayer}
         currentPlayer={currentPlayer}
+        players={players}
         debts={debts}
         transactions={transactions}
         onOpenTransfer={handleQuickSendMoney}
@@ -641,6 +680,10 @@ export const App: React.FC = () => {
           setIsBankerOpen(false);
           setIsHistoryOpen(true);
         }}
+        onOpenStats={() => {
+          setIsBankerOpen(false);
+          setIsStatsOpen(true);
+        }}
       />
 
       <HistoryViewModal
@@ -648,6 +691,18 @@ export const App: React.FC = () => {
         onClose={() => setIsHistoryOpen(false)}
         transactions={transactions}
         players={players}
+        currentPlayer={currentPlayer}
+        onReverseTransaction={handleReverseTransaction}
+      />
+
+      <GameStatsModal
+        isOpen={isStatsOpen}
+        onClose={() => setIsStatsOpen(false)}
+        room={room}
+        players={players}
+        transactions={transactions}
+        currentPlayer={currentPlayer}
+        onEndGame={handleEndGame}
       />
 
       <ThemeModal
