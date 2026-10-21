@@ -176,10 +176,14 @@ export const App: React.FC = () => {
   // Leave room
   const handleLeaveRoom = async () => {
     if (window.confirm('Bu odadan ayrılmak istediğinizden emin misiniz?')) {
-      if (roomId) {
+      const activePlayerId = roomState?.currentPlayer?.id;
+      const activeRoomId = roomState?.room?.id || roomId;
+      if (activeRoomId || activePlayerId) {
         try {
-          await dataService.leaveRoom(roomId);
-        } catch {}
+          await dataService.leaveRoom(activeRoomId || undefined, activePlayerId);
+        } catch (err) {
+          console.error('leaveRoom error:', err);
+        }
       }
       localStorage.removeItem(CURRENT_ROOM_KEY);
       setRoomId(null);
@@ -428,7 +432,8 @@ export const App: React.FC = () => {
   }
 
   const { room, currentPlayer, players, debts, transactions } = roomState;
-  const totalCash = players.reduce((sum, p) => sum + p.balance, 0);
+  const activePlayers = players.filter(p => p.is_online !== false);
+  const totalCash = activePlayers.reduce((sum, p) => sum + p.balance, 0);
   const activeDebtsCount = debts.filter(d => (d.status === 'active' || d.status === 'partially_paid') && d.remaining_amount > 0).length;
 
   return (
@@ -440,7 +445,7 @@ export const App: React.FC = () => {
       <Navbar
         room={room}
         currentPlayer={currentPlayer}
-        playerCount={players.length}
+        playerCount={activePlayers.length}
         isLive={dataService.isLiveSupabase()}
         isRefreshing={isRefreshing}
         onRefresh={handleManualRefresh}
@@ -452,7 +457,7 @@ export const App: React.FC = () => {
       <main className="flex-1 overflow-y-auto overscroll-contain max-w-md w-full mx-auto px-4 pt-3 pb-24 space-y-3.5">
         {/* Compact Summary */}
         <SummaryCard
-          playerCount={players.length}
+          playerCount={activePlayers.length}
           totalCash={totalCash}
           lastTransaction={transactions[0]}
           onOpenHistory={() => setIsHistoryOpen(true)}

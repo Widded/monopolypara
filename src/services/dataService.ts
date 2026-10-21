@@ -113,23 +113,27 @@ export const dataService = {
     };
   },
 
-  async leaveRoom(roomId: string): Promise<void> {
+  async leaveRoom(roomId?: string, playerId?: string): Promise<void> {
     const sessionToken = getOrCreateSessionToken();
     if (isSupabaseConfigured() && supabase) {
       try {
         await supabase.rpc('leave_room_player', {
-          p_room_id: roomId,
+          p_player_id: playerId || null,
+          p_room_id: roomId || null,
           p_session_token: sessionToken,
         });
-      } catch {
-        try {
-          await supabase
-            .from('players')
-            .update({ is_online: false })
-            .eq('room_id', roomId)
-            .eq('session_token', sessionToken);
-        } catch {}
+      } catch (e) {
+        console.warn('leave_room_player RPC call failed:', e);
       }
+
+      // Güvenlik yedeği: Doğrudan ID ile de kapatmayı dene
+      try {
+        if (playerId) {
+          await supabase.from('players').update({ is_online: false }).eq('id', playerId);
+        } else if (sessionToken) {
+          await supabase.from('players').update({ is_online: false }).eq('session_token', sessionToken);
+        }
+      } catch {}
     }
   },
 
