@@ -23,7 +23,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const quickNames = ['Ahmet', 'Mehmet', 'Ali', 'Ayşe', 'Zeynep', 'Can', 'Emre', 'Elif'];
+  const quickNames = ['Batu', 'Salih', 'Yusuf', 'Mert', 'Hoca', 'Çınar', 'Sülo', 'Efe'];
 
   // Link ile katılma desteği (?join=WID-12345 veya ?room=12345)
   useEffect(() => {
@@ -192,7 +192,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                   setPlayerName(e.target.value);
                   setError(null);
                 }}
-                placeholder="Örn: Ahmet"
+                placeholder="Örn: Batu"
                 maxLength={24}
                 className="input-field text-base py-2.5 font-medium"
                 autoFocus
@@ -341,7 +341,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                       setPlayerName(e.target.value);
                       setError(null);
                     }}
-                    placeholder="Örn: Mehmet"
+                    placeholder="Örn: Salih"
                     maxLength={24}
                     className="input-field text-base py-2.5 font-medium"
                   />
