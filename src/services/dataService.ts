@@ -128,8 +128,8 @@ export const dataService = {
       const populatedTransactions = txList.map(t => ({
         ...t,
         amount: Number(t.amount),
-        from_player_name: t.from_player_id ? playersList.find(p => p.id === t.from_player_id)?.name : 'Banka',
-        to_player_name: t.to_player_id ? playersList.find(p => p.id === t.to_player_id)?.name : 'Banka',
+        from_player_name: t.from_player_id ? (playersList.find(p => p.id === t.from_player_id)?.name || 'Oyuncu') : 'Banka',
+        to_player_name: t.to_player_id ? (playersList.find(p => p.id === t.to_player_id)?.name || 'Oyuncu') : 'Banka',
       }));
 
       const currentPlayer = populatedPlayers.find(p => p.session_token === sessionToken) || populatedPlayers[0];

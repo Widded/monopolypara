@@ -19,27 +19,30 @@ export const PlayerList: React.FC<PlayerListProps> = ({
 }) => {
   // Kullanıcının kendisi (Sen) daima en üstte, diğerleri alfabetik
   const sortedPlayers = [...players].sort((a, b) => {
-    if (a.id === currentPlayer.id) return -1;
-    if (b.id === currentPlayer.id) return 1;
-    return a.name.localeCompare(b.name);
+    if (a.id === currentPlayer?.id) return -1;
+    if (b.id === currentPlayer?.id) return 1;
+    return (a.name || '').localeCompare(b.name || '');
   });
 
   return (
-    <div className="space-y-1">
+    <div className="pt-1 space-y-2">
       {/* Liste Başlığı */}
-      <div className="flex items-center justify-between px-1 pt-1 pb-0.5 text-xs">
+      <div className="flex items-center justify-between px-1 text-xs">
         <span className="font-semibold text-text-subtle text-[11px] uppercase tracking-wider">
           Oyuncular ({players.length})
         </span>
+        <span className="text-[10px] text-text-subtle">
+          Detay için dokun
+        </span>
       </div>
 
-      {/* Doğal Liste Düzeni */}
-      <div className="divide-y divide-border-subtle/50 border-t border-b border-border-subtle/60">
+      {/* Oyuncu Satırları */}
+      <div className="space-y-1.5">
         {sortedPlayers.map(player => (
           <PlayerCard
             key={player.id}
             player={player}
-            isCurrentPlayer={player.id === currentPlayer.id}
+            isCurrentPlayer={player.id === currentPlayer?.id}
             onSendMoney={onSendMoney}
             onSelectPlayer={onSelectPlayer}
           />
@@ -48,8 +51,10 @@ export const PlayerList: React.FC<PlayerListProps> = ({
 
       {/* Odada tek kişi varsa sade davet uyarısı */}
       {players.length === 1 && (
-        <div className="text-center py-6 px-4 text-xs text-text-muted">
-          <p className="mb-2.5">Arkadaşlarının katılması için oda kodunu paylaş.</p>
+        <div className="mt-3 p-3.5 rounded-xl bg-bg-surface/30 border border-border-subtle/50 text-center">
+          <p className="text-xs text-text-muted mb-2">
+            Masada henüz başka oyuncu yok. Arkadaşlarını davet etmek için oda kodunu paylaşabilirsin.
+          </p>
           <button
             type="button"
             onClick={onCopyRoomCode}
@@ -62,3 +67,4 @@ export const PlayerList: React.FC<PlayerListProps> = ({
     </div>
   );
 };
+

@@ -187,8 +187,8 @@ export const mockStorage = {
     // Populate transaction player names
     const populatedTransactions = transactions.map(t => ({
       ...t,
-      from_player_name: t.from_player_id ? players.find(p => p.id === t.from_player_id)?.name : 'Banka',
-      to_player_name: t.to_player_id ? players.find(p => p.id === t.to_player_id)?.name : 'Banka',
+      from_player_name: t.from_player_id ? (players.find(p => p.id === t.from_player_id)?.name || 'Oyuncu') : 'Banka',
+      to_player_name: t.to_player_id ? (players.find(p => p.id === t.to_player_id)?.name || 'Oyuncu') : 'Banka',
     }));
 
     return {
