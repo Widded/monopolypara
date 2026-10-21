@@ -472,9 +472,9 @@ export const App: React.FC = () => {
           spread: 70,
           origin: { y: 0.6 },
         });
-        addToast('Oyun resmen tamamlandı! Şampiyon ilan edildi 🏆', 'success');
+        addToast('Oyun resmen tamamlandı! Şampiyon ilan edildi.', 'success');
       } else {
-        addToast('Oyun devam ediyor 🟢', 'info');
+        addToast('Oyun devam ediyor.', 'info');
       }
       await refreshRoomState();
     } catch (err: any) {

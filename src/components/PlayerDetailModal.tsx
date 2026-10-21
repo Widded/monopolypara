@@ -205,12 +205,12 @@ export const PlayerDetailModal: React.FC<PlayerDetailModalProps> = ({
                     onChange={e => setBeneficiaryTarget(e.target.value)}
                     className="input-field py-1.5 px-2 text-xs w-full bg-bg-surface border-border-subtle"
                   >
-                    <option value="bank">🏛️ Banka Kasası (Vergi / Ceza)</option>
+                    <option value="bank">Banka Kasası (Vergi / Ceza)</option>
                     {players
                       .filter(p => p.id !== player.id && !p.is_bankrupt && p.is_online !== false)
                       .map(p => (
                         <option key={p.id} value={p.id}>
-                          👤 {p.name} (Kira / Tapu Alacaklısı)
+                          {p.name} (Kira / Tapu Alacaklısı)
                         </option>
                       ))}
                   </select>

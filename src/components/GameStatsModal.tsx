@@ -91,19 +91,19 @@ export const GameStatsModal: React.FC<GameStatsModalProps> = ({
   // WhatsApp / Metin Özeti Kopyalama
   const handleCopySummary = async () => {
     const lines = [
-      `🏆 MONOPOLY İSTANBUL - MASA RAPORU (${room.code})`,
-      `Durum: ${isGameEnded ? 'Oyun Tamamlandı 🏁' : 'Canlı Masa 🟢'}`,
+      `MONOPOLY İSTANBUL - MASA RAPORU (${room.code})`,
+      `Durum: ${isGameEnded ? 'Oyun Tamamlandı' : 'Canlı Masa'}`,
       `Toplam Dönen Hacim: ${formatMoney(totalVolume)}`,
       '',
-      '👑 LİDERLİK TABLOSU:',
+      'LİDERLİK TABLOSU:',
       ...sortedPlayers.map((p, idx) => {
-        const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '👤';
+        const rank = `${idx + 1}.`;
         const status = p.is_bankrupt ? '(İFLAS ETTİ)' : `${formatMoney(p.balance)}`;
-        return `${medal} ${idx + 1}. ${p.name}: ${status}`;
+        return `${rank} ${p.name}: ${status}`;
       }),
       '',
-      `💰 En Çok Kazanan: ${topEarner?.name || '-'} (${formatMoney(maxReceived > 0 ? maxReceived : 0)})`,
-      `💸 En Çok Harcayan: ${topSpender?.name || '-'} (${formatMoney(maxSent > 0 ? maxSent : 0)})`,
+      `En Çok Kazanan: ${topEarner?.name || '-'} (${formatMoney(maxReceived > 0 ? maxReceived : 0)})`,
+      `En Çok Harcayan: ${topSpender?.name || '-'} (${formatMoney(maxSent > 0 ? maxSent : 0)})`,
     ];
 
     try {
@@ -142,7 +142,7 @@ export const GameStatsModal: React.FC<GameStatsModalProps> = ({
                     ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' 
                     : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
                 }`}>
-                  {isGameEnded ? 'Oyun Bitti 🏁' : 'Devam Ediyor'}
+                  {isGameEnded ? 'Oyun Bitti' : 'Devam Ediyor'}
                 </span>
               </h3>
               <p className="text-[11px] text-text-subtle font-mono">Oda Kodu: {room.code}</p>
