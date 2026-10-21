@@ -1,4 +1,5 @@
 import React from 'react';
+import { Users, UserPlus } from 'lucide-react';
 import { Player } from '../types';
 import { PlayerCard } from './PlayerCard';
 
@@ -25,19 +26,20 @@ export const PlayerList: React.FC<PlayerListProps> = ({
   });
 
   return (
-    <div className="pt-1 space-y-2">
+    <div className="space-y-2 pt-1">
       {/* Liste Başlığı */}
       <div className="flex items-center justify-between px-1 text-xs">
-        <span className="font-semibold text-text-subtle text-[11px] uppercase tracking-wider">
-          Oyuncular ({players.length})
-        </span>
-        <span className="text-[10px] text-text-subtle">
+        <div className="flex items-center gap-1.5 text-text-subtle font-bold text-[11px] uppercase tracking-wider">
+          <Users className="w-3.5 h-3.5 text-text-muted" />
+          <span>Masadaki Oyuncular ({players.length})</span>
+        </div>
+        <span className="text-[10px] text-text-subtle font-medium">
           Detay için dokun
         </span>
       </div>
 
       {/* Oyuncu Satırları */}
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         {sortedPlayers.map(player => (
           <PlayerCard
             key={player.id}
@@ -49,16 +51,20 @@ export const PlayerList: React.FC<PlayerListProps> = ({
         ))}
       </div>
 
-      {/* Odada tek kişi varsa sade davet uyarısı */}
+      {/* Odada tek kişi varsa şık bir davet kartı */}
       {players.length === 1 && (
-        <div className="mt-3 p-3.5 rounded-xl bg-bg-surface/30 border border-border-subtle/50 text-center">
-          <p className="text-xs text-text-muted mb-2">
-            Masada henüz başka oyuncu yok. Arkadaşlarını davet etmek için oda kodunu paylaşabilirsin.
+        <div className="mt-3 p-4 rounded-2xl bg-gradient-to-br from-[#121624] to-[#0E111B] border border-white/[0.08] text-center shadow-lg">
+          <div className="w-9 h-9 rounded-xl bg-accent/15 border border-accent/30 flex items-center justify-center mx-auto mb-2 text-accent">
+            <UserPlus className="w-4 h-4" />
+          </div>
+          <h4 className="text-xs font-bold text-white mb-1">Masada henüz kimse yok</h4>
+          <p className="text-[11px] text-text-muted mb-3 max-w-xs mx-auto">
+            Arkadaşların oda kodunu girerek veya bağlantıyı kullanarak masaya anında katılabilir.
           </p>
           <button
             type="button"
             onClick={onCopyRoomCode}
-            className="btn-secondary text-xs py-1.5 px-3 mx-auto"
+            className="btn-primary text-xs py-2 px-4 mx-auto font-bold"
           >
             Oda Kodunu Kopyala
           </button>
@@ -67,4 +73,5 @@ export const PlayerList: React.FC<PlayerListProps> = ({
     </div>
   );
 };
+
 

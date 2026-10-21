@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Send, Shield } from 'lucide-react';
 import { Player } from '../types';
 import { formatMoney } from '../utils/formatters';
 
@@ -7,6 +8,30 @@ interface PlayerCardProps {
   isCurrentPlayer: boolean;
   onSendMoney: (player: Player) => void;
   onSelectPlayer: (player: Player) => void;
+}
+
+// Deterministic player token gradient & styling
+function getPlayerTokenStyle(name: string, isCurrentPlayer: boolean) {
+  if (isCurrentPlayer) {
+    return {
+      bg: 'bg-emerald-500/20',
+      border: 'border-emerald-500/40',
+      text: 'text-emerald-300',
+    };
+  }
+  const styles = [
+    { bg: 'bg-blue-500/20', border: 'border-blue-500/40', text: 'text-blue-300' },
+    { bg: 'bg-amber-500/20', border: 'border-amber-500/40', text: 'text-amber-300' },
+    { bg: 'bg-rose-500/20', border: 'border-rose-500/40', text: 'text-rose-300' },
+    { bg: 'bg-purple-500/20', border: 'border-purple-500/40', text: 'text-purple-300' },
+    { bg: 'bg-cyan-500/20', border: 'border-cyan-500/40', text: 'text-cyan-300' },
+    { bg: 'bg-teal-500/20', border: 'border-teal-500/40', text: 'text-teal-300' },
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return styles[Math.abs(hash) % styles.length];
 }
 
 export const PlayerCard: React.FC<PlayerCardProps> = ({
@@ -34,69 +59,84 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   const receivables = Number(player.total_receivable || 0);
   const debts = Number(player.total_debt || 0);
   const safePlayerName = player.name && player.name.trim().length > 0 ? player.name.trim() : 'İsimsiz Oyuncu';
+  const initial = safePlayerName.charAt(0).toUpperCase();
+  const tokenStyle = getPlayerTokenStyle(safePlayerName, isCurrentPlayer);
 
   return (
     <div
       onClick={() => onSelectPlayer(player)}
-      className={`group px-3.5 py-3 rounded-xl transition-all duration-150 cursor-pointer select-none flex items-center justify-between gap-3 border ${
+      className={`group rounded-2xl p-3 sm:p-3.5 transition-all duration-150 cursor-pointer select-none flex items-center justify-between gap-3 border active:scale-[0.99] ${
         isCurrentPlayer
-          ? 'bg-[#151A27]/90 hover:bg-[#182032] border-[#252E44]/90 shadow-sm'
-          : 'bg-[#0E121B]/40 hover:bg-[#131825]/60 border-border-subtle/50'
+          ? 'bg-gradient-to-r from-[#141F2C] via-[#111724] to-[#0D121D] border-emerald-500/35 shadow-md shadow-emerald-950/20'
+          : 'bg-gradient-to-r from-[#121624]/90 to-[#0E111B]/90 hover:from-[#161B2C] hover:to-[#111624] border-white/[0.07] hover:border-white/[0.14] shadow-sm'
       }`}
     >
-      {/* Sol: Oyuncu Kimliği ve Durum Bilgileri */}
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5 min-w-0">
-          {/* Oyuncu Adı - Daima gerçek oyuncu adı alanı */}
-          <span className="font-semibold text-[15px] text-text-main tracking-tight truncate">
-            {safePlayerName}
-          </span>
-
-          {/* Sen Göstergesi (Yalnızca kullanıcı kendisiyse) */}
+      {/* Sol: Avatar Tokeni + İsim + Rozetler */}
+      <div className="flex items-center gap-3 min-w-0 flex-1">
+        {/* Oyuncu Karakter Avatarı */}
+        <div
+          className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 border shadow-inner ${tokenStyle.bg} ${tokenStyle.border} ${tokenStyle.text} relative`}
+        >
+          {initial}
           {isCurrentPlayer && (
-            <span className="text-[10px] font-semibold text-accent/90 bg-accent/10 px-1.5 py-0.5 rounded tracking-wide shrink-0">
-              Sen
-            </span>
-          )}
-
-          {/* Bankacı Göstergesi (Yalnızca bankacıysa) */}
-          {player.is_banker && (
-            <span className="text-[10px] font-medium text-[#8EA3D0] bg-[#141A29] border border-[#212C45] px-1.5 py-0.5 rounded tracking-wide shrink-0">
-              Bankacı
-            </span>
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#141F2C] absolute -top-1 -right-1 shadow-sm" />
           )}
         </div>
 
-        {/* Alacak / Borç bilgisi (varsa çok temiz ve ikincil) */}
-        {(receivables > 0 || debts > 0) && (
-          <div className="flex items-center gap-2 mt-0.5 text-[11px] text-text-muted">
-            {receivables > 0 && (
-              <span className="font-money text-money-pos">
-                +{formatMoney(receivables)} alacak
+        {/* İsim ve Durum */}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="font-bold text-[15px] text-white tracking-tight truncate">
+              {safePlayerName}
+            </span>
+
+            {/* Sen Rozeti */}
+            {isCurrentPlayer && (
+              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.2 rounded-md tracking-wider shrink-0">
+                SEN
               </span>
             )}
-            {receivables > 0 && debts > 0 && (
-              <span className="text-text-subtle text-[10px]">·</span>
-            )}
-            {debts > 0 && (
-              <span className="font-money text-money-neg">
-                -{formatMoney(debts)} borç
+
+            {/* Bankacı Rozeti */}
+            {player.is_banker && (
+              <span className="text-[10px] font-semibold text-amber-300 bg-amber-500/15 border border-amber-500/30 px-1.5 py-0.2 rounded-md tracking-wide shrink-0 flex items-center gap-1">
+                <Shield className="w-2.5 h-2.5 text-amber-400" />
+                <span>Bankacı</span>
               </span>
             )}
           </div>
-        )}
+
+          {/* Alacak / Borç Özeti (Yalnızca varsa temiz görünür) */}
+          {(receivables > 0 || debts > 0) && (
+            <div className="flex items-center gap-2 mt-0.5 text-[11px] text-text-muted">
+              {receivables > 0 && (
+                <span className="font-money text-emerald-400 font-medium">
+                  +{formatMoney(receivables)} alacak
+                </span>
+              )}
+              {receivables > 0 && debts > 0 && (
+                <span className="text-text-subtle text-[10px]">·</span>
+              )}
+              {debts > 0 && (
+                <span className="font-money text-rose-400 font-medium">
+                  -{formatMoney(debts)} borç
+                </span>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Sağ: Bakiye ve Hızlı Aksiyon Butonu */}
-      <div className="flex items-center gap-3 shrink-0">
+      {/* Sağ: Bakiye ve Hızlı Para Gönder Butonu */}
+      <div className="flex items-center gap-2.5 shrink-0">
         <div className="text-right">
           <div
-            className={`font-money font-extrabold text-[18px] tracking-tight tabular-nums transition-colors duration-200 ${
+            className={`font-money font-extrabold text-[19px] sm:text-[20px] tracking-tight tabular-nums transition-colors duration-200 ${
               balanceChange === 'up'
-                ? 'text-money-pos'
+                ? 'text-emerald-400'
                 : balanceChange === 'down'
-                ? 'text-money-neg'
-                : 'text-text-main'
+                ? 'text-rose-400'
+                : 'text-white'
             }`}
           >
             {formatMoney(player.balance)}
@@ -110,13 +150,15 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               e.stopPropagation();
               onSendMoney(player);
             }}
-            className="text-xs font-semibold text-text-muted hover:text-text-main bg-bg-surface hover:bg-bg-hover border border-border-subtle/80 px-2.5 py-1.5 rounded-lg transition-all active:scale-95 cursor-pointer shrink-0"
+            className="flex items-center gap-1 text-xs font-bold text-emerald-400 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 px-2.5 py-1.5 rounded-xl transition-all active:scale-95 cursor-pointer shrink-0"
             title={`${safePlayerName} adlı oyuncuya para gönder`}
           >
-            Gönder
+            <Send className="w-3 h-3 stroke-[2.2]" />
+            <span>Gönder</span>
           </button>
         )}
       </div>
     </div>
   );
 };
+

@@ -429,7 +429,7 @@ export const App: React.FC = () => {
       />
 
       {/* Main Content Area - Scrollable viewport starting cleanly at top */}
-      <main className="flex-1 overflow-y-auto overscroll-contain max-w-md w-full mx-auto px-4 pt-2 pb-20 space-y-3">
+      <main className="flex-1 overflow-y-auto overscroll-contain max-w-md w-full mx-auto px-4 pt-3 pb-24 space-y-3.5">
         {/* Compact Summary */}
         <SummaryCard
           playerCount={players.length}

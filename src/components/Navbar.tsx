@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Shield, Copy, Check } from 'lucide-react';
 import { Room, Player } from '../types';
 
 interface NavbarProps {
@@ -24,58 +25,65 @@ export const Navbar: React.FC<NavbarProps> = ({
     try {
       await navigator.clipboard.writeText(room.code);
       setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      setTimeout(() => setCopied(false), 1800);
     } catch {
       setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      setTimeout(() => setCopied(false), 1800);
     }
   };
 
   return (
-    <header className="shrink-0 z-30 bg-bg-main border-b border-border-subtle/80 px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-3">
+    <header className="shrink-0 z-30 bg-bg-main/95 backdrop-blur-md border-b border-white/[0.07] px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-3">
       <div className="max-w-md mx-auto flex items-center justify-between gap-3">
-        {/* Sol: Monopoly Başlığı + Oda Kodu + Bağlantı Noktası */}
+        {/* Sol: Logo + Oda Kodu Hapı */}
         <div className="flex items-center gap-2.5 min-w-0">
-          <span className="font-extrabold text-[16px] tracking-tight text-text-main shrink-0 select-none">
-            Monopoly
+          <span className="font-extrabold text-[16px] tracking-tight text-white select-none shrink-0">
+            MONOPOLY
           </span>
 
+          {/* Oda Kodu Glass Pill */}
           <button
             type="button"
             onClick={handleCopyCode}
-            className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text-main transition-colors group cursor-pointer select-none"
+            className="flex items-center gap-1.5 bg-[#141824] hover:bg-[#1A2030] border border-white/[0.08] hover:border-white/[0.16] px-2.5 py-1 rounded-full transition-all active:scale-95 cursor-pointer group shadow-sm select-none"
             title="Oda kodunu kopyala"
           >
             <span
-              className={`w-1.5 h-1.5 rounded-full shrink-0 transition-colors ${
-                isLive ? 'bg-money-pos shadow-[0_0_6px_rgba(57,217,138,0.4)]' : 'bg-text-subtle'
+              className={`w-2 h-2 rounded-full shrink-0 transition-all ${
+                isLive
+                  ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)] animate-pulse'
+                  : 'bg-text-subtle'
               }`}
             />
-            <span className="font-mono text-[11px] font-semibold text-text-muted group-hover:text-text-main tracking-wide">
+            <span className="font-mono text-xs font-bold text-text-muted group-hover:text-white tracking-wider">
               {room.code}
             </span>
-            {copied && (
-              <span className="text-[10px] text-money-pos font-medium">Kopyalandı</span>
+            {copied ? (
+              <Check className="w-3 h-3 text-emerald-400" />
+            ) : (
+              <Copy className="w-3 h-3 text-text-subtle group-hover:text-text-muted transition-colors opacity-70" />
             )}
           </button>
         </div>
 
-        {/* Sağ: Bankacı Paneli (varsa) ve Çıkış Butonu */}
-        <div className="flex items-center gap-2.5 shrink-0">
+        {/* Sağ: Bankacı Paneli ve Çıkış Butonları */}
+        <div className="flex items-center gap-2 shrink-0">
           {currentPlayer?.is_banker && (
             <button
               type="button"
               onClick={onOpenBankerPanel}
-              className="text-[11px] font-medium text-[#8EA3D0] hover:text-[#B4C6EE] transition-colors px-1 py-0.5"
+              className="flex items-center gap-1.5 bg-amber-500/10 hover:bg-amber-500/20 active:scale-95 text-amber-300 border border-amber-500/30 text-xs font-semibold px-2.5 py-1 rounded-lg transition-all shadow-sm"
+              title="Banka Yönetim Paneli"
             >
-              Banka Paneli
+              <Shield className="w-3 h-3 text-amber-400" />
+              <span>Banka</span>
             </button>
           )}
 
           <button
             type="button"
             onClick={onLeaveRoom}
-            className="text-xs text-text-subtle hover:text-money-neg transition-colors py-0.5 px-1 font-medium"
+            className="text-xs text-text-muted hover:text-money-neg transition-colors py-1 px-1.5 font-medium rounded-lg hover:bg-white/[0.04]"
             title="Odadan Ayrıl"
           >
             Çıkış
@@ -85,3 +93,4 @@ export const Navbar: React.FC<NavbarProps> = ({
     </header>
   );
 };
+
