@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, Check, Users, Shield, LogOut } from 'lucide-react';
+import { Check, Copy, Shield, LogOut } from 'lucide-react';
 import { Room, Player } from '../types';
 
 interface NavbarProps {
@@ -25,75 +25,64 @@ export const Navbar: React.FC<NavbarProps> = ({
     try {
       await navigator.clipboard.writeText(room.code);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => setCopied(false), 1500);
     } catch {
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => setCopied(false), 1500);
     }
   };
 
   return (
-    <header className="shrink-0 z-30 bg-bg-main/95 backdrop-blur-md border-b border-border-subtle px-3 pt-[calc(0.5rem+env(safe-area-inset-top))] pb-2">
-      <div className="max-w-md mx-auto flex items-center justify-between gap-2">
-        {/* Left: App Brand & Room Code Pill */}
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="font-extrabold text-sm text-text-main tracking-tight shrink-0">
+    <header className="shrink-0 z-30 bg-bg-main border-b border-border-subtle px-4 pt-[calc(0.6rem+env(safe-area-inset-top))] pb-2.5">
+      <div className="max-w-md mx-auto flex items-center justify-between gap-3">
+        {/* Left: Brand + Room Code */}
+        <div className="flex items-baseline gap-2.5 min-w-0">
+          <h1 className="font-extrabold text-[15px] tracking-tight text-text-main shrink-0">
             Monopoly
-          </span>
+          </h1>
 
-          {/* Interactive Compact Room Code Pill */}
           <button
+            type="button"
             onClick={handleCopyCode}
-            className="flex items-center gap-1.5 bg-bg-surface hover:bg-[#232832] border border-border-subtle active:scale-95 px-2 py-1 rounded-lg text-xs transition-all group shrink-0"
-            title="Oda kodunu kopyalamak için dokunun"
+            className="flex items-center gap-1.5 text-xs text-text-muted hover:text-text-main transition-colors group cursor-pointer"
+            title="Oda kodunu kopyala"
           >
             <span
-              className={`w-1.5 h-1.5 rounded-full ${
-                isLive ? 'bg-money-pos animate-pulse' : 'bg-accent'
+              className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                isLive ? 'bg-money-pos' : 'bg-text-subtle'
               }`}
             />
-            <span className="font-mono font-bold text-text-main group-hover:text-accent">
+            <span className="font-mono text-[11px] font-semibold text-text-muted group-hover:text-text-main">
               {room.code}
             </span>
             {copied ? (
-              <Check className="w-3 h-3 text-money-pos" />
+              <span className="text-[10px] text-money-pos font-medium">Kopyalandı</span>
             ) : (
-              <Copy className="w-3 h-3 text-text-muted group-hover:text-accent" />
+              <Copy className="w-3 h-3 text-text-subtle group-hover:text-text-muted opacity-60" />
             )}
-            {copied && <span className="text-[10px] text-money-pos font-semibold">Kopyalandı</span>}
           </button>
         </div>
 
-        {/* Right: Players Count, Banker Badge, Exit */}
-        <div className="flex items-center gap-1.5 shrink-0">
-          {/* Player Count */}
-          <div
-            className="flex items-center gap-1 bg-bg-surface px-2 py-1 rounded-lg border border-border-subtle text-xs text-text-muted font-medium"
-            title="Odada bulunan oyuncu sayısı"
-          >
-            <Users className="w-3.5 h-3.5 text-accent" />
-            <span className="font-semibold text-text-main">{playerCount}</span>
-          </div>
-
-          {/* Banker Action Button */}
+        {/* Right: Actions */}
+        <div className="flex items-center gap-2 shrink-0">
           {currentPlayer.is_banker && (
             <button
+              type="button"
               onClick={onOpenBankerPanel}
-              className="flex items-center gap-1 bg-accent/15 hover:bg-accent/25 border border-accent/40 text-accent px-2 py-1 rounded-lg text-xs font-bold transition-all active:scale-95"
-              title="Bankacı Panelini Aç"
+              className="flex items-center gap-1 text-[11px] font-medium text-[#8EA3D0] hover:text-[#A8BDE5] bg-[#121620] border border-[#20283A] px-2 py-1 rounded transition-colors"
             >
-              <Shield className="w-3 h-3 text-accent" />
+              <Shield className="w-3 h-3" />
               <span>Banka</span>
             </button>
           )}
 
-          {/* Leave Button */}
           <button
+            type="button"
             onClick={onLeaveRoom}
-            className="p-1 rounded-lg hover:bg-bg-surface text-text-muted hover:text-money-neg transition-colors"
+            className="text-[11px] text-text-subtle hover:text-money-neg px-1.5 py-1 transition-colors"
             title="Odadan Ayrıl"
           >
-            <LogOut className="w-3.5 h-3.5" />
+            Çıkış
           </button>
         </div>
       </div>

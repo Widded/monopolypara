@@ -4,15 +4,15 @@
 
 @layer base {
   :root {
-    --bg-main: #0B0D10;
-    --bg-card: #14171C;
-    --bg-surface: #1B1F26;
-    --border-subtle: #282D35;
-    --text-main: #F3F4F6;
-    --text-muted: #9299A5;
-    --money-pos: #39D98A;
-    --money-neg: #FF626C;
-    --accent: #72E3A1;
+    --bg-main: #08090C;
+    --bg-card: #101318;
+    --bg-surface: #161A22;
+    --border-subtle: #1C2028;
+    --text-main: #F4F5F7;
+    --text-muted: #828896;
+    --money-pos: #2ED573;
+    --money-neg: #FF5252;
+    --accent: #2ED573;
   }
 
   html, body {
@@ -23,9 +23,10 @@
     overflow: hidden;
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
-    background-color: #0B0D10;
-    color: #F3F4F6;
+    background-color: #08090C;
+    color: #F4F5F7;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    letter-spacing: -0.011em;
   }
 
   #root {
@@ -37,60 +38,52 @@
   }
 
   * {
-    border-color: #282D35;
+    border-color: #1C2028;
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Custom subtle scrollbars */
+  /* Minimal hairline scrollbar */
   ::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
+    width: 3px;
+    height: 3px;
   }
   ::-webkit-scrollbar-track {
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: #282D35;
+    background: #1C2028;
     border-radius: 9999px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: #39424E;
   }
 }
 
-/* Custom UI helper components */
 @layer components {
+  /* Solid, tactile primary action button */
   .btn-primary {
-    @apply flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-bg-main font-semibold px-4 py-3 rounded-xl transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+    @apply flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-[#08090C] font-semibold px-4 py-2.5 rounded-lg transition-all duration-150 active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none;
   }
   
+  /* Quiet secondary button */
   .btn-secondary {
-    @apply flex items-center justify-center gap-2 bg-bg-surface hover:bg-[#232832] text-text-main font-medium border border-border-subtle px-4 py-3 rounded-xl transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+    @apply flex items-center justify-center gap-2 bg-bg-surface hover:bg-bg-hover text-text-main font-medium border border-border-subtle px-4 py-2.5 rounded-lg transition-all duration-150 active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none;
   }
 
   .btn-danger {
-    @apply flex items-center justify-center gap-2 bg-money-neg/10 hover:bg-money-neg/20 text-money-neg font-medium border border-money-neg/30 px-4 py-3 rounded-xl transition-all duration-150 active:scale-[0.98];
+    @apply flex items-center justify-center gap-2 bg-money-neg/10 hover:bg-money-neg/20 text-money-neg font-medium border border-money-neg/25 px-4 py-2.5 rounded-lg transition-all duration-150 active:scale-[0.98];
   }
 
-  .card {
-    @apply bg-bg-card border border-border-subtle rounded-xl p-3 transition-colors;
+  /* Clean editorial row */
+  .list-row {
+    @apply transition-colors duration-100 border-b border-border-subtle;
   }
 
   .input-field {
-    @apply w-full bg-bg-surface border border-border-subtle focus:border-accent focus:ring-1 focus:ring-accent text-text-main placeholder-text-muted rounded-xl px-3.5 py-2.5 text-sm outline-none transition-all;
-  }
-
-  .money-badge-pos {
-    @apply text-money-pos font-mono font-semibold;
-  }
-
-  .money-badge-neg {
-    @apply text-money-neg font-mono font-semibold;
+    @apply w-full bg-bg-surface border border-border-subtle focus:border-border-active text-text-main placeholder-text-muted rounded-lg px-3.5 py-2.5 text-sm outline-none transition-all;
   }
 }
 
-/* Numeric font utility for currency figures */
+/* Numeric font utility with strict tabular figures for perfectly aligned money */
 .font-money {
   font-family: 'JetBrains Mono', 'Inter', monospace;
   font-feature-settings: 'tnum' on, 'zero' on;
+  letter-spacing: -0.03em;
 }

@@ -446,25 +446,13 @@ export const App: React.FC = () => {
           onReject={handleRejectDebt}
         />
 
-        {/* Players & Wallet Area */}
+        {/* Players List - Core of the App */}
         <PlayerList
           players={players}
           currentPlayer={currentPlayer}
           onSendMoney={handleQuickSendMoney}
           onSelectPlayer={(p) => setDetailPlayer(p)}
           onCopyRoomCode={handleCopyRoomCode}
-          onOpenTransfer={() => {
-            setPreSelectedReceiver(null);
-            setIsTransferOpen(true);
-          }}
-          onOpenLendDebt={() => {
-            setPreSelectedDebtor(null);
-            setIsLendOpen(true);
-          }}
-          onOpenPayDebt={() => {
-            setPreSelectedDebtId(null);
-            setIsPayOpen(true);
-          }}
         />
       </main>
 

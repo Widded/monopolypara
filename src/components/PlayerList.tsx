@@ -1,8 +1,6 @@
 import React from 'react';
 import { Player } from '../types';
 import { PlayerCard } from './PlayerCard';
-import { MyWalletCard } from './MyWalletCard';
-import { UserPlus, Users } from 'lucide-react';
 
 interface PlayerListProps {
   players: Player[];
@@ -10,9 +8,6 @@ interface PlayerListProps {
   onSendMoney: (player: Player) => void;
   onSelectPlayer: (player: Player) => void;
   onCopyRoomCode: () => void;
-  onOpenTransfer: () => void;
-  onOpenLendDebt: () => void;
-  onOpenPayDebt: () => void;
 }
 
 export const PlayerList: React.FC<PlayerListProps> = ({
@@ -21,69 +16,49 @@ export const PlayerList: React.FC<PlayerListProps> = ({
   onSendMoney,
   onSelectPlayer,
   onCopyRoomCode,
-  onOpenTransfer,
-  onOpenLendDebt,
-  onOpenPayDebt,
 }) => {
-  // Sadece diğer oyuncuları listele, mevcut oyuncu (SEN) en üstteki cüzdan kartında özel olarak görünür
-  const otherPlayers = players
-    .filter(p => p.id !== currentPlayer.id)
-    .sort((a, b) => a.name.localeCompare(b.name));
+  // Kullanıcının kendisi (Sen) daima en üstte, diğerleri alfabetik
+  const sortedPlayers = [...players].sort((a, b) => {
+    if (a.id === currentPlayer.id) return -1;
+    if (b.id === currentPlayer.id) return 1;
+    return a.name.localeCompare(b.name);
+  });
 
   return (
-    <div className="space-y-3">
-      {/* 1. BÖLÜM: KULLANICININ KENDİ CÜZDANI (SEN) */}
-      <div>
-        <MyWalletCard
-          player={currentPlayer}
-          onOpenTransfer={onOpenTransfer}
-          onOpenLendDebt={onOpenLendDebt}
-          onOpenPayDebt={onOpenPayDebt}
-          onSelectSelf={() => onSelectPlayer(currentPlayer)}
-        />
+    <div className="space-y-1">
+      {/* Liste Başlığı */}
+      <div className="flex items-center justify-between px-1 pt-1 pb-0.5 text-xs">
+        <span className="font-semibold text-text-subtle text-[11px] uppercase tracking-wider">
+          Oyuncular ({players.length})
+        </span>
       </div>
 
-      {/* 2. BÖLÜM: DİĞER OYUNCULAR LİSTESİ */}
-      <div className="pt-1">
-        <div className="flex items-center justify-between mb-1.5 px-0.5">
-          <span className="text-[11px] font-semibold text-text-muted uppercase tracking-wider">
-            Diğer Oyuncular ({otherPlayers.length})
-          </span>
+      {/* Doğal Liste Düzeni */}
+      <div className="divide-y divide-border-subtle/50 border-t border-b border-border-subtle/60">
+        {sortedPlayers.map(player => (
+          <PlayerCard
+            key={player.id}
+            player={player}
+            isCurrentPlayer={player.id === currentPlayer.id}
+            onSendMoney={onSendMoney}
+            onSelectPlayer={onSelectPlayer}
+          />
+        ))}
+      </div>
+
+      {/* Odada tek kişi varsa sade davet uyarısı */}
+      {players.length === 1 && (
+        <div className="text-center py-6 px-4 text-xs text-text-muted">
+          <p className="mb-2.5">Arkadaşlarının katılması için oda kodunu paylaş.</p>
+          <button
+            type="button"
+            onClick={onCopyRoomCode}
+            className="btn-secondary text-xs py-1.5 px-3 mx-auto"
+          >
+            Oda Kodunu Kopyala
+          </button>
         </div>
-
-        {otherPlayers.length > 0 ? (
-          <div className="space-y-2">
-            {otherPlayers.map(player => (
-              <PlayerCard
-                key={player.id}
-                player={player}
-                isCurrentPlayer={false}
-                onSendMoney={onSendMoney}
-                onSelectPlayer={onSelectPlayer}
-              />
-            ))}
-          </div>
-        ) : (
-          /* Odada sadece 1 kişi varsa */
-          <div className="bg-bg-card/40 border border-dashed border-border-subtle rounded-xl p-4 text-center mt-2">
-            <div className="w-8 h-8 rounded-full bg-bg-surface border border-border-subtle flex items-center justify-center mx-auto mb-2 text-accent">
-              <UserPlus className="w-4 h-4" />
-            </div>
-            <h4 className="text-xs font-semibold text-text-main mb-1">
-              Diğer Oyuncuları Bekleyin
-            </h4>
-            <p className="text-[11px] text-text-muted max-w-xs mx-auto mb-3">
-              Arkadaşlarınızın bu odaya katılabilmesi için oda kodunu onlarla paylaşın.
-            </p>
-            <button
-              onClick={onCopyRoomCode}
-              className="btn-secondary text-xs py-2 px-3 mx-auto"
-            >
-              Oda Kodunu Kopyala
-            </button>
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 };

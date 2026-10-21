@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Debt, Player } from '../types';
 import { formatMoney } from '../utils/formatters';
-import { Check, X, Clock, HandCoins, AlertCircle } from 'lucide-react';
 
 interface PendingDebtBannerProps {
   debts: Debt[];
@@ -45,81 +44,61 @@ export const PendingDebtBanner: React.FC<PendingDebtBannerProps> = ({
 
   return (
     <div className="space-y-2">
-      {/* Gelen Borç Teklifleri (Borcu alan oyuncu onaylamalı) */}
+      {/* Gelen Borç Teklifi */}
       {incomingPending.map(debt => (
         <div
           key={debt.id}
-          className="bg-bg-surface border border-accent/40 rounded-xl p-3"
+          className="bg-bg-surface border border-border-active rounded-lg p-3 text-xs"
         >
-          <div className="flex items-start gap-2.5">
-            <div className="p-1.5 rounded-lg bg-accent/15 text-accent mt-0.5 shrink-0">
-              <HandCoins className="w-4 h-4" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between gap-1">
-                <span className="text-[11px] font-bold text-accent uppercase tracking-wider">
-                  Borç Teklifi Onayı
-                </span>
-                <span className="font-money font-bold text-sm text-accent">
-                  +{formatMoney(debt.initial_amount)}
-                </span>
-              </div>
-              <p className="text-xs text-text-main mt-0.5">
-                <strong className="text-white">{debt.creditor_name}</strong> size borç vermek istiyor.
-              </p>
-              {debt.description && (
-                <p className="text-[10px] text-text-muted mt-0.5 italic truncate">
-                  "{debt.description}"
-                </p>
-              )}
+          <div className="flex items-baseline justify-between gap-2 mb-1">
+            <span className="font-semibold text-text-main">
+              {debt.creditor_name} size borç teklif etti
+            </span>
+            <span className="font-money font-bold text-money-pos text-sm">
+              +{formatMoney(debt.initial_amount)}
+            </span>
+          </div>
 
-              {/* Aksiyon butonları */}
-              <div className="flex items-center gap-2 mt-2">
-                <button
-                  type="button"
-                  disabled={processingId === debt.id}
-                  onClick={() => handleAction(debt.id, 'approve')}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 bg-accent hover:bg-accent-hover text-bg-main font-bold text-xs rounded-lg transition-colors disabled:opacity-50 active:scale-95 shadow-sm"
-                >
-                  <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                  {processingId === debt.id ? 'İşleniyor...' : 'Kabul Et (+Para Al)'}
-                </button>
-                <button
-                  type="button"
-                  disabled={processingId === debt.id}
-                  onClick={() => handleAction(debt.id, 'reject')}
-                  className="flex items-center justify-center gap-1 py-1.5 px-3 bg-[#241C1C] hover:bg-[#341C1C] text-money-neg border border-money-neg/30 font-medium text-xs rounded-lg transition-colors disabled:opacity-50 active:scale-95"
-                >
-                  <X className="w-3.5 h-3.5" />
-                  Reddet
-                </button>
-              </div>
-            </div>
+          {debt.description && (
+            <p className="text-[11px] text-text-muted mb-2">"{debt.description}"</p>
+          )}
+
+          <div className="flex items-center gap-2 mt-2">
+            <button
+              type="button"
+              disabled={processingId === debt.id}
+              onClick={() => handleAction(debt.id, 'approve')}
+              className="btn-primary flex-1 py-1.5 text-xs font-bold"
+            >
+              {processingId === debt.id ? 'İşleniyor...' : 'Kabul Et'}
+            </button>
+            <button
+              type="button"
+              disabled={processingId === debt.id}
+              onClick={() => handleAction(debt.id, 'reject')}
+              className="btn-secondary py-1.5 px-3 text-xs text-money-neg hover:text-money-neg"
+            >
+              Reddet
+            </button>
           </div>
         </div>
       ))}
 
-      {/* Giden Borç Teklifleri (Karşı tarafın onayı bekleniyor) */}
+      {/* Giden Borç Teklifi */}
       {outgoingPending.map(debt => (
         <div
           key={debt.id}
-          className="bg-bg-card border border-border-subtle rounded-xl p-2.5 flex items-center justify-between gap-2 text-xs"
+          className="bg-bg-card border border-border-subtle rounded-lg px-3 py-2 flex items-center justify-between gap-2 text-xs"
         >
-          <div className="flex items-center gap-2 min-w-0">
-            <Clock className="w-4 h-4 text-text-muted shrink-0" />
-            <div className="min-w-0">
-              <span className="text-text-main font-medium truncate block">
-                <strong>{debt.debtor_name}</strong> kişisine{' '}
-                <strong className="font-money text-accent">{formatMoney(debt.initial_amount)}</strong> borç teklifiniz onay bekliyor
-              </span>
-              <span className="text-[10px] text-text-muted">Onaylandığında para aktarılacaktır.</span>
-            </div>
+          <div className="text-text-muted min-w-0 truncate">
+            <span className="text-text-main font-medium">{debt.debtor_name}</span> için{' '}
+            <strong className="font-money text-text-main">{formatMoney(debt.initial_amount)}</strong> onay bekliyor
           </div>
           <button
             type="button"
             disabled={processingId === debt.id}
             onClick={() => handleAction(debt.id, 'reject')}
-            className="shrink-0 text-[10px] font-semibold text-text-muted hover:text-money-neg border border-border-subtle hover:border-money-neg/40 px-2 py-1 rounded-lg transition-colors disabled:opacity-50"
+            className="text-[11px] text-text-subtle hover:text-money-neg shrink-0"
           >
             İptal
           </button>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Send, HandCoins, ArrowUpRight, ArrowDownLeft, Shield } from 'lucide-react';
+import { X, Send, HandCoins, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { Player, Debt, Transaction } from '../types';
 import { formatMoney } from '../utils/formatters';
 
@@ -13,7 +13,7 @@ interface PlayerDetailModalProps {
   onOpenTransfer: (targetPlayer: Player) => void;
   onOpenLend: (targetPlayer: Player) => void;
   onOpenPayDebt: (debtId?: string) => void;
-  onOpenDebtDetail: (debt: Debt) => void;
+  onOpenDebtDetail?: (debt: Debt) => void;
 }
 
 export const PlayerDetailModal: React.FC<PlayerDetailModalProps> = ({
@@ -32,115 +32,112 @@ export const PlayerDetailModal: React.FC<PlayerDetailModalProps> = ({
   const playerDebts = debts.filter(d => d.debtor_id === player.id && (d.status === 'active' || d.status === 'partially_paid'));
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-100">
-      <div className="bg-bg-card border border-border-subtle w-full max-w-sm rounded-t-2xl sm:rounded-2xl p-4 shadow-xl">
-        {/* Header */}
-        <div className="flex items-center justify-between pb-2 border-b border-border-subtle mb-3">
-          <div className="flex items-center gap-1.5">
-            <h3 className="font-bold text-sm text-text-main">{player.name}</h3>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-100">
+      <div className="bg-bg-card border border-border-subtle w-full max-w-sm rounded-t-2xl sm:rounded-xl p-4">
+        {/* Başlık */}
+        <div className="flex items-center justify-between pb-2.5 border-b border-border-subtle mb-3">
+          <div className="flex items-baseline gap-2">
+            <h3 className="font-bold text-base text-text-main tracking-tight">{player.name}</h3>
             {isSelf && (
-              <span className="bg-accent/15 text-accent text-[10px] font-semibold px-1.5 py-0.2 rounded border border-accent/30">
-                Sen
+              <span className="text-xs font-semibold text-accent">
+                (Sen)
               </span>
             )}
             {player.is_banker && (
-              <span className="flex items-center gap-0.5 bg-[#1F2633] text-[#7E99D3] border border-[#2B3547] text-[10px] font-medium px-1.5 py-0.2 rounded">
-                <Shield className="w-2.5 h-2.5" />
-                Bankacı
+              <span className="text-[11px] text-[#7E99D3]">
+                · Bankacı
               </span>
             )}
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="text-text-muted hover:text-text-main p-1 rounded-lg"
+            className="text-text-subtle hover:text-text-main p-1 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Big Balance & Alacak/Borç row */}
-        <div className="p-3 bg-bg-surface border border-border-subtle rounded-xl text-center mb-3">
-          <div className="text-[10px] text-text-muted uppercase font-semibold">Nakit Bakiye</div>
-          <div className="font-money font-bold text-2xl text-text-main my-0.5">
+        {/* Bakiye Özeti */}
+        <div className="py-3 px-3.5 bg-bg-surface border border-border-subtle rounded-lg text-center mb-3">
+          <div className="text-[11px] text-text-muted mb-0.5">Nakit Bakiye</div>
+          <div className="font-money font-bold text-2xl text-text-main">
             {formatMoney(player.balance)}
           </div>
-          <div className="flex justify-center gap-4 text-[11px] text-text-muted pt-1 border-t border-border-subtle/50 mt-1">
-            <span className="flex items-center gap-1">
-              <ArrowUpRight className="w-3 h-3 text-money-pos" />
-              Alacak: <strong className="font-money text-money-pos">{formatMoney(player.total_receivable || 0)}</strong>
+          <div className="flex justify-center gap-4 text-xs text-text-muted pt-2 border-t border-border-subtle mt-2">
+            <span>
+              Alacak: <strong className="font-money text-money-pos font-semibold">{formatMoney(player.total_receivable || 0)}</strong>
             </span>
-            <span>·</span>
-            <span className="flex items-center gap-1">
-              <ArrowDownLeft className="w-3 h-3 text-money-neg" />
-              Borç: <strong className="font-money text-money-neg">{formatMoney(player.total_debt || 0)}</strong>
+            <span className="text-border-subtle">·</span>
+            <span>
+              Borç: <strong className="font-money text-money-neg font-semibold">{formatMoney(player.total_debt || 0)}</strong>
             </span>
           </div>
         </div>
 
-        {/* Recovery PIN notice */}
-        <div className="p-2.5 bg-bg-surface border border-border-subtle rounded-xl flex items-center justify-between text-xs mb-3">
+        {/* Kurtarma PIN Kodu */}
+        <div className="py-2 px-3 bg-bg-surface border border-border-subtle rounded-lg flex items-center justify-between text-xs mb-3">
           <div>
-            <span className="text-[10px] text-text-muted font-bold uppercase tracking-wider block">
-              Kurtarma Kodu (PIN)
-            </span>
-            <span className="text-[11px] text-text-muted/80">
-              Odadan çıkarsa bu kodla geri dönebilir
-            </span>
+            <span className="text-[11px] text-text-muted block">Kurtarma Kodu (PIN)</span>
+            <span className="text-[10px] text-text-subtle">Odadan çıkılırsa bu kodla geri dönülür</span>
           </div>
-          <span className="font-mono font-bold text-sm text-accent bg-accent/15 border border-accent/30 px-2.5 py-1 rounded-lg shrink-0 ml-2">
-            {player.recovery_pin || '1234'}
+          <span className="font-mono font-bold text-sm text-text-main bg-bg-card border border-border-subtle px-2 py-0.5 rounded">
+            {player.recovery_pin || '----'}
           </span>
         </div>
 
-        {/* Quick action buttons if not self */}
+        {/* Başkasıysa işlem butonları */}
         {!isSelf && (
           <div className="grid grid-cols-2 gap-2 mb-3">
             <button
+              type="button"
               onClick={() => {
                 onClose();
                 onOpenTransfer(player);
               }}
-              className="btn-primary py-2 text-xs font-semibold"
+              className="btn-primary py-2 text-xs font-bold"
             >
               <Send className="w-3.5 h-3.5" />
               <span>Para Gönder</span>
             </button>
             <button
+              type="button"
               onClick={() => {
                 onClose();
                 onOpenLend(player);
               }}
               className="btn-secondary py-2 text-xs font-semibold"
             >
-              <HandCoins className="w-3.5 h-3.5 text-money-pos" />
+              <HandCoins className="w-3.5 h-3.5" />
               <span>Borç Ver</span>
             </button>
           </div>
         )}
 
-        {/* Active Debts */}
+        {/* Açık Borçları */}
         {playerDebts.length > 0 && (
-          <div className="space-y-1.5">
-            <div className="text-[11px] font-semibold text-text-muted uppercase tracking-wider">
+          <div className="space-y-1.5 pt-1">
+            <div className="text-[11px] font-semibold text-text-muted">
               Açık Borçları ({playerDebts.length})
             </div>
             {playerDebts.map(d => (
               <div
                 key={d.id}
-                className="p-2 bg-bg-surface border border-border-subtle rounded-lg flex items-center justify-between text-xs"
+                className="py-2 px-3 bg-bg-surface border border-border-subtle rounded-lg flex items-center justify-between text-xs"
               >
                 <div>
                   <span className="text-text-main font-medium">{d.creditor_name}'e</span>
-                  <span className="text-[10px] text-text-muted block">
-                    Kalan: <strong className="font-money text-money-neg">{formatMoney(d.remaining_amount)}</strong>
+                  <span className="text-[11px] text-money-neg font-money block">
+                    Kalan: {formatMoney(d.remaining_amount)}
                   </span>
                 </div>
                 <button
+                  type="button"
                   onClick={() => {
                     onClose();
                     onOpenPayDebt(d.id);
                   }}
-                  className="bg-accent/15 hover:bg-accent hover:text-bg-main text-accent border border-accent/30 text-[10px] font-bold px-2 py-1 rounded"
+                  className="btn-secondary py-1 px-2.5 text-[11px]"
                 >
                   Öde
                 </button>

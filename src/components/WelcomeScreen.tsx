@@ -107,7 +107,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 setMode('create');
                 setError(null);
               }}
-              className="btn-primary w-full py-3.5 text-sm font-semibold shadow-lg shadow-accent/10"
+              className="btn-primary w-full py-3.5 text-sm font-semibold"
             >
               <PlusCircle className="w-4 h-4" />
               <span>Yeni Oyun Oluştur</span>
