@@ -101,33 +101,29 @@ export const App: React.FC = () => {
     };
   }, [roomId, refreshRoomState]);
 
-  // Mobile background / sleep sync: When returning to browser or tab gains focus, sync immediately
+  // 5 saniyede bir otomatik verileri yenile (Polling) + Ön plana gelindiğinde anında güncelle
   useEffect(() => {
     if (!roomId) return;
 
-    const handleForegroundSync = () => {
-      if (document.visibilityState === 'visible') {
-        dataService.ensureConnection();
-        refreshRoomState();
-      }
+    const handleSync = () => {
+      dataService.ensureConnection();
+      refreshRoomState();
     };
 
-    document.addEventListener('visibilitychange', handleForegroundSync);
-    window.addEventListener('focus', handleForegroundSync);
-    window.addEventListener('pageshow', handleForegroundSync);
+    // Sekmeye/uygulamaya her dönüldüğünde anında çek
+    document.addEventListener('visibilitychange', handleSync);
+    window.addEventListener('focus', handleSync);
+    window.addEventListener('pageshow', handleSync);
 
-    // Periodic lightweight heartbeat (every 4s) when screen is active
-    // Guarantees all devices stay 100% in sync even if mobile OS throttles or drops websockets
+    // Her 5 saniyede bir düzenli ve otomatik olarak tüm verileri güncelle
     const interval = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        refreshRoomState();
-      }
-    }, 4000);
+      refreshRoomState();
+    }, 5000);
 
     return () => {
-      document.removeEventListener('visibilitychange', handleForegroundSync);
-      window.removeEventListener('focus', handleForegroundSync);
-      window.removeEventListener('pageshow', handleForegroundSync);
+      document.removeEventListener('visibilitychange', handleSync);
+      window.removeEventListener('focus', handleSync);
+      window.removeEventListener('pageshow', handleSync);
       clearInterval(interval);
     };
   }, [roomId, refreshRoomState]);
