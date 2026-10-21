@@ -101,6 +101,37 @@ export const App: React.FC = () => {
     };
   }, [roomId, refreshRoomState]);
 
+  // Mobile background / sleep sync: When returning to browser or tab gains focus, sync immediately
+  useEffect(() => {
+    if (!roomId) return;
+
+    const handleForegroundSync = () => {
+      if (document.visibilityState === 'visible') {
+        dataService.ensureConnection();
+        refreshRoomState();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleForegroundSync);
+    window.addEventListener('focus', handleForegroundSync);
+    window.addEventListener('pageshow', handleForegroundSync);
+
+    // Periodic lightweight heartbeat (every 4s) when screen is active
+    // Guarantees all devices stay 100% in sync even if mobile OS throttles or drops websockets
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        refreshRoomState();
+      }
+    }, 4000);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleForegroundSync);
+      window.removeEventListener('focus', handleForegroundSync);
+      window.removeEventListener('pageshow', handleForegroundSync);
+      clearInterval(interval);
+    };
+  }, [roomId, refreshRoomState]);
+
   // Room creation
   const handleCreateRoom = async (playerName: string) => {
     const { room, player } = await dataService.createRoom(playerName);

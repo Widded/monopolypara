@@ -186,7 +186,12 @@ export const dataService = {
           { event: '*', schema: 'public', table: 'debts', filter: `room_id=eq.${roomId}` },
           () => onChange()
         )
-        .subscribe();
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            // Reconnected or newly connected -> pull fresh data immediately
+            onChange();
+          }
+        });
 
       return () => {
         supabase?.removeChannel(channel);
@@ -194,6 +199,18 @@ export const dataService = {
     }
 
     return mockStorage.subscribe(onChange);
+  },
+
+  ensureConnection(): void {
+    if (isSupabaseConfigured() && supabase) {
+      try {
+        if (supabase.realtime && typeof supabase.realtime.connect === 'function') {
+          supabase.realtime.connect();
+        }
+      } catch (err) {
+        console.warn('Realtime reconnect failed:', err);
+      }
+    }
   },
 
   async transferMoney(roomId: string, fromId: string, toId: string, amount: number, description?: string): Promise<void> {
