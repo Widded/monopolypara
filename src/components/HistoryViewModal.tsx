@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, History, Send, HandCoins, CheckSquare, Handshake, ShieldAlert } from 'lucide-react';
+import { X, History, Send, HandCoins, CheckSquare, Handshake, ShieldAlert, Landmark, Skull } from 'lucide-react';
 import { Transaction, Player, TransactionType } from '../types';
 import { formatMoney, formatTime, TRANSACTION_TYPE_LABELS } from '../utils/formatters';
 
@@ -35,6 +35,10 @@ export const HistoryViewModal: React.FC<HistoryViewModalProps> = ({
     switch (type) {
       case 'transfer':
         return <Send className="w-3 h-3 text-accent" />;
+      case 'bank_payment':
+        return <Landmark className="w-3 h-3 text-amber-400" />;
+      case 'bankruptcy':
+        return <Skull className="w-3 h-3 text-red-400" />;
       case 'debt_lend':
         return <HandCoins className="w-3 h-3 text-money-pos" />;
       case 'debt_payment':

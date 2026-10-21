@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Send, AlertTriangle, Loader2, Landmark } from 'lucide-react';
+import { X, Send, AlertTriangle, Loader2, Landmark, Check, Lock, Receipt, Sparkles, Building2 } from 'lucide-react';
 import { Player } from '../types';
 import { formatMoney } from '../utils/formatters';
 import { Keypad } from './Keypad';
@@ -109,7 +109,12 @@ export const TransferModal: React.FC<TransferModalProps> = ({
           <div>
             <div className="text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-1.5 flex items-center justify-between">
               <span>Alıcı Seçimi</span>
-              {isBank && <span className="text-[10px] text-amber-400 font-bold">🏛️ Banka Kasası</span>}
+              {isBank && (
+                <span className="text-[10px] text-amber-400 font-bold flex items-center gap-1">
+                  <Landmark className="w-3 h-3" />
+                  <span>Banka Kasası</span>
+                </span>
+              )}
             </div>
 
             {/* Banka Butonu */}
@@ -119,38 +124,48 @@ export const TransferModal: React.FC<TransferModalProps> = ({
                 setReceiverId('bank');
                 setError(null);
               }}
-              className={`w-full mb-2 p-2 rounded-xl border text-left text-xs transition-all flex items-center justify-between cursor-pointer ${
+              className={`w-full mb-2 p-2.5 rounded-xl border text-left text-xs transition-all flex items-center justify-between cursor-pointer active:scale-[0.99] ${
                 isBank
-                  ? 'border-amber-400 bg-amber-500/15 text-amber-200 font-bold shadow-sm'
+                  ? 'border-amber-400 bg-amber-500/15 text-amber-200 font-bold shadow-md shadow-amber-950/20 ring-1 ring-amber-400/40'
                   : 'border-white/[0.08] bg-bg-surface text-text-muted hover:text-white hover:border-white/[0.16]'
               }`}
             >
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
-                  <Landmark className="w-3.5 h-3.5" />
+              <div className="flex items-center gap-2.5">
+                <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border transition-colors ${
+                  isBank
+                    ? 'bg-amber-400 text-black border-amber-300'
+                    : 'bg-amber-500/15 text-amber-400 border-amber-500/30'
+                }`}>
+                  <Landmark className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="font-bold">🏛️ Banka Kasası</div>
-                  <div className="text-[10px] text-text-subtle font-normal">Tapu alımı, vergi, ceza ödemesi</div>
+                  <div className="font-bold text-xs text-text-main">Banka Kasası</div>
+                  <div className="text-[10px] text-text-subtle font-normal">Tapu alımı, vergi ve ceza ödemesi</div>
                 </div>
               </div>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${isBank ? 'bg-amber-400 text-black border-amber-400' : 'bg-white/[0.04] text-text-subtle border-white/[0.08]'}`}>
-                {isBank ? 'Seçildi' : 'Seç'}
-              </span>
+              <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
+                isBank
+                  ? 'border-amber-400 bg-amber-400 text-black'
+                  : 'border-white/20 bg-transparent'
+              }`}>
+                {isBank && <Check className="w-2.5 h-2.5 stroke-[3.5]" />}
+              </div>
             </button>
 
             {/* Banka Hızlı Ödeme Çipleri */}
             {isBank && (
-              <div className="grid grid-cols-2 gap-1.5 mb-2.5 p-2 rounded-xl bg-amber-500/[0.06] border border-amber-500/20 text-[11px]">
+              <div className="grid grid-cols-2 gap-1.5 mb-2.5 p-2 rounded-xl bg-amber-500/[0.06] border border-amber-500/20 text-[11px] animate-in fade-in duration-100">
                 <button
                   type="button"
                   onClick={() => {
                     setAmountStr('50');
                     setDescription('Hapis Cezası');
                   }}
-                  className="py-1 px-2 rounded-lg bg-bg-card border border-white/[0.06] hover:border-amber-400/50 text-left font-medium text-text-muted hover:text-white"
+                  className="py-1.5 px-2 rounded-lg bg-bg-card border border-white/[0.06] hover:border-amber-400/50 text-left font-medium text-text-muted hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
-                  🔒 Hapis: <strong className="text-amber-300 font-money">50 ₺</strong>
+                  <Lock className="w-3 h-3 text-amber-400 shrink-0" />
+                  <span className="truncate">Hapis:</span>
+                  <strong className="text-amber-300 font-money ml-auto">50 ₺</strong>
                 </button>
                 <button
                   type="button"
@@ -158,9 +173,11 @@ export const TransferModal: React.FC<TransferModalProps> = ({
                     setAmountStr('200');
                     setDescription('Gelir Vergisi');
                   }}
-                  className="py-1 px-2 rounded-lg bg-bg-card border border-white/[0.06] hover:border-amber-400/50 text-left font-medium text-text-muted hover:text-white"
+                  className="py-1.5 px-2 rounded-lg bg-bg-card border border-white/[0.06] hover:border-amber-400/50 text-left font-medium text-text-muted hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
-                  📋 Gelir Vergisi: <strong className="text-amber-300 font-money">200 ₺</strong>
+                  <Receipt className="w-3 h-3 text-amber-400 shrink-0" />
+                  <span className="truncate">Gelir Vergisi:</span>
+                  <strong className="text-amber-300 font-money ml-auto">200 ₺</strong>
                 </button>
                 <button
                   type="button"
@@ -168,44 +185,75 @@ export const TransferModal: React.FC<TransferModalProps> = ({
                     setAmountStr('100');
                     setDescription('Lüks Vergisi');
                   }}
-                  className="py-1 px-2 rounded-lg bg-bg-card border border-white/[0.06] hover:border-amber-400/50 text-left font-medium text-text-muted hover:text-white"
+                  className="py-1.5 px-2 rounded-lg bg-bg-card border border-white/[0.06] hover:border-amber-400/50 text-left font-medium text-text-muted hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
-                  💎 Lüks Vergisi: <strong className="text-amber-300 font-money">100 ₺</strong>
+                  <Sparkles className="w-3 h-3 text-amber-400 shrink-0" />
+                  <span className="truncate">Lüks Vergisi:</span>
+                  <strong className="text-amber-300 font-money ml-auto">100 ₺</strong>
                 </button>
                 <button
                   type="button"
                   onClick={() => {
                     setDescription('Tapu Satın Alımı');
                   }}
-                  className="py-1 px-2 rounded-lg bg-bg-card border border-white/[0.06] hover:border-amber-400/50 text-left font-medium text-text-muted hover:text-white truncate"
+                  className="py-1.5 px-2 rounded-lg bg-bg-card border border-white/[0.06] hover:border-amber-400/50 text-left font-medium text-text-muted hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
-                  🏠 Tapu Satın Alımı
+                  <Building2 className="w-3 h-3 text-amber-400 shrink-0" />
+                  <span className="truncate">Tapu Satın Alımı</span>
                 </button>
               </div>
             )}
 
-            {/* Oyuncular */}
+            {/* Oyuncular: Sayıya göre dinamik genişleyen kutular */}
             {potentialReceivers.length > 0 && (
-              <div className="grid grid-cols-2 gap-1.5 max-h-24 overflow-y-auto pr-0.5">
-                {potentialReceivers.map(p => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => {
-                      setReceiverId(p.id);
-                      setDescription('');
-                      setError(null);
-                    }}
-                    className={`py-1.5 px-2.5 rounded-lg border text-left text-xs transition-all cursor-pointer ${
-                      receiverId === p.id
-                        ? 'border-accent bg-accent/15 text-text-main font-semibold'
-                        : 'border-border-subtle bg-bg-surface text-text-muted hover:text-text-main'
-                    }`}
-                  >
-                    <div className="truncate font-medium">{p.name}</div>
-                    <div className="text-[10px] font-money opacity-80">{formatMoney(p.balance)}</div>
-                  </button>
-                ))}
+              <div className={`grid ${potentialReceivers.length === 1 ? 'grid-cols-1' : 'grid-cols-2'} gap-1.5 max-h-36 overflow-y-auto pr-0.5`}>
+                {potentialReceivers.map((p, idx) => {
+                  const isSelected = receiverId === p.id;
+                  const isLastOdd = potentialReceivers.length % 2 === 1 && idx === potentialReceivers.length - 1;
+
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => {
+                        setReceiverId(p.id);
+                        setDescription('');
+                        setError(null);
+                      }}
+                      className={`p-2 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between gap-2 active:scale-[0.99] ${
+                        isLastOdd ? 'col-span-2' : ''
+                      } ${
+                        isSelected
+                          ? 'border-accent bg-accent/15 text-text-main font-semibold ring-1 ring-accent/30 shadow-sm'
+                          : 'border-border-subtle bg-bg-surface text-text-muted hover:border-white/[0.18] hover:text-text-main'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 border transition-colors ${
+                          isSelected
+                            ? 'bg-accent/25 border-accent text-accent'
+                            : 'bg-white/[0.05] border-white/[0.08] text-text-muted'
+                        }`}>
+                          {p.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-semibold text-xs text-text-main truncate">{p.name}</div>
+                          <div className="text-[10px] text-text-subtle font-money">
+                            {formatMoney(p.balance)}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
+                        isSelected
+                          ? 'border-accent bg-accent text-black'
+                          : 'border-white/20 bg-transparent'
+                      }`}>
+                        {isSelected && <Check className="w-2.5 h-2.5 stroke-[3.5]" />}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>

@@ -103,24 +103,34 @@ export const BankerPanelModal: React.FC<BankerPanelModalProps> = ({
           <div className="text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-1">
             Tek Dokunuşla Maaş (+200 ₺)
           </div>
-          <div className="grid grid-cols-2 gap-1.5">
-            {players.map(p => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => handleQuickGoSalary(p)}
-                disabled={loading}
-                className="p-1.5 px-2 bg-bg-surface hover:bg-[#252b36] border border-border-subtle rounded-lg flex items-center justify-between text-xs transition-colors"
-              >
-                <div className="truncate text-left">
-                  <div className="font-medium text-text-main truncate text-[11px]">{p.name}</div>
-                  <div className="text-[10px] text-text-muted font-money">{formatMoney(p.balance)}</div>
-                </div>
-                <span className="text-[10px] font-bold text-accent bg-accent/15 px-1.5 py-0.5 rounded shrink-0 ml-1">
-                  +200
-                </span>
-              </button>
-            ))}
+          <div className={`grid ${players.length === 1 ? 'grid-cols-1' : 'grid-cols-2'} gap-1.5`}>
+            {players.map((p, idx) => {
+              const isLastOdd = players.length % 2 === 1 && idx === players.length - 1;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => handleQuickGoSalary(p)}
+                  disabled={loading}
+                  className={`p-1.5 px-2 bg-bg-surface hover:bg-[#252b36] border border-border-subtle rounded-lg flex items-center justify-between text-xs transition-colors cursor-pointer active:scale-[0.99] ${
+                    isLastOdd ? 'col-span-2' : ''
+                  }`}
+                >
+                  <div className="truncate text-left flex items-center gap-2 min-w-0">
+                    <div className="w-6 h-6 rounded-md bg-white/[0.05] border border-white/[0.08] flex items-center justify-center font-bold text-[10px] text-text-muted shrink-0">
+                      {p.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-medium text-text-main truncate text-[11px]">{p.name}</div>
+                      <div className="text-[10px] text-text-muted font-money">{formatMoney(p.balance)}</div>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold text-accent bg-accent/15 border border-accent/30 px-1.5 py-0.5 rounded shrink-0 ml-1">
+                    +200 ₺
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
 

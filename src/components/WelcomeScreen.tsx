@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, LogIn, ArrowRight, AlertTriangle, Loader2, KeyRound, UserCheck } from 'lucide-react';
+import { PlusCircle, LogIn, ArrowRight, AlertTriangle, Loader2, KeyRound, UserCheck, Lightbulb } from 'lucide-react';
 import { resetSessionToken } from '../utils/formatters';
 
 interface WelcomeScreenProps {
@@ -391,8 +391,11 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                   />
                 </div>
 
-                <div className="p-2.5 bg-bg-surface border border-border-subtle rounded-xl text-xs text-text-muted leading-relaxed">
-                  💡 <strong>Nasıl Öğrenirim?</strong> Odadaki arkadaşlarınız kendi ekranlarında sizin kartınızda görünen <strong>PIN: XXXX</strong> kodunu size okuyabilir.
+                <div className="p-2.5 bg-bg-surface border border-border-subtle rounded-xl text-xs text-text-muted leading-relaxed flex items-start gap-2">
+                  <Lightbulb className="w-4 h-4 text-accent shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="text-text-main font-semibold">Nasıl Öğrenirim?</strong> Odadaki arkadaşlarınız kendi ekranlarında sizin kartınızda görünen <strong className="text-accent font-mono">PIN: XXXX</strong> kodunu size okuyabilir.
+                  </div>
                 </div>
 
                 <button

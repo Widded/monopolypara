@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, HandCoins, AlertTriangle, Loader2 } from 'lucide-react';
+import { X, HandCoins, AlertTriangle, Loader2, Check } from 'lucide-react';
 import { Player } from '../types';
 import { formatMoney } from '../utils/formatters';
 import { Keypad } from './Keypad';
@@ -105,25 +105,53 @@ export const LendDebtModal: React.FC<LendDebtModalProps> = ({
                 Odada başka oyuncu yok.
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-1.5">
-                {potentialDebtors.map(p => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => {
-                      setDebtorId(p.id);
-                      setError(null);
-                    }}
-                    className={`py-1.5 px-2.5 rounded-lg border text-left text-xs transition-all ${
-                      debtorId === p.id
-                        ? 'border-money-pos bg-money-pos/15 text-text-main font-semibold'
-                        : 'border-border-subtle bg-bg-surface text-text-muted hover:text-text-main'
-                    }`}
-                  >
-                    <div className="truncate">{p.name}</div>
-                    <div className="text-[10px] font-money opacity-80">{formatMoney(p.balance)}</div>
-                  </button>
-                ))}
+              <div className={`grid ${potentialDebtors.length === 1 ? 'grid-cols-1' : 'grid-cols-2'} gap-1.5 max-h-36 overflow-y-auto pr-0.5`}>
+                {potentialDebtors.map((p, idx) => {
+                  const isSelected = debtorId === p.id;
+                  const isLastOdd = potentialDebtors.length % 2 === 1 && idx === potentialDebtors.length - 1;
+
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => {
+                        setDebtorId(p.id);
+                        setError(null);
+                      }}
+                      className={`p-2 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between gap-2 active:scale-[0.99] ${
+                        isLastOdd ? 'col-span-2' : ''
+                      } ${
+                        isSelected
+                          ? 'border-money-pos bg-money-pos/15 text-text-main font-semibold ring-1 ring-money-pos/30 shadow-sm'
+                          : 'border-border-subtle bg-bg-surface text-text-muted hover:border-white/[0.18] hover:text-text-main'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 border transition-colors ${
+                          isSelected
+                            ? 'bg-money-pos/25 border-money-pos text-money-pos'
+                            : 'bg-white/[0.05] border-white/[0.08] text-text-muted'
+                        }`}>
+                          {p.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-semibold text-xs text-text-main truncate">{p.name}</div>
+                          <div className="text-[10px] text-text-subtle font-money">
+                            {formatMoney(p.balance)}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
+                        isSelected
+                          ? 'border-money-pos bg-money-pos text-black'
+                          : 'border-white/20 bg-transparent'
+                      }`}>
+                        {isSelected && <Check className="w-2.5 h-2.5 stroke-[3.5]" />}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
