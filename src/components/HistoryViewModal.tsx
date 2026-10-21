@@ -134,6 +134,23 @@ export const HistoryViewModal: React.FC<HistoryViewModalProps> = ({
           </div>
         )}
 
+        {/* Banker Information Banner */}
+        {isBanker ? (
+          <div className="mb-2 p-2 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center gap-2 text-xs text-amber-300 shrink-0">
+            <RotateCcw className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <span className="text-[11px] leading-tight font-medium">
+              <strong>Bankacı Yetkisi:</strong> Hatalı bir transferi yanındaki <strong>Geri Al</strong> butonuna basarak iptal edebilir ve parayı iade edebilirsiniz.
+            </span>
+          </div>
+        ) : (
+          <div className="mb-2 p-2 rounded-xl bg-bg-surface border border-border-subtle flex items-center gap-1.5 text-xs text-text-muted shrink-0">
+            <History className="w-3.5 h-3.5 text-text-subtle shrink-0" />
+            <span className="text-[11px] leading-tight">
+              Hatalı transferlerin iptali ve para iadesi yalnızca <strong>Bankacı</strong> tarafından yapılabilir.
+            </span>
+          </div>
+        )}
+
         {/* Filters */}
         <div className="grid grid-cols-2 gap-1.5 mb-2.5 shrink-0">
           <select
@@ -147,7 +164,7 @@ export const HistoryViewModal: React.FC<HistoryViewModalProps> = ({
             <option value="debt_payment">Borç Ödeme</option>
             <option value="debt_settlement">Anlaşmalı</option>
             <option value="banker_adjust">Banka</option>
-            <option value="reversal">İptaller</option>
+            <option value="reversal">İptal / İadeler</option>
           </select>
 
           <select
@@ -177,21 +194,29 @@ export const HistoryViewModal: React.FC<HistoryViewModalProps> = ({
               return (
                 <div
                   key={tx.id}
-                  className={`p-2 rounded-lg text-xs flex items-center justify-between border transition-colors ${
+                  className={`p-2.5 rounded-xl text-xs flex items-center justify-between gap-2 border transition-colors ${
                     tx.is_reversed 
-                      ? 'bg-bg-surface/50 border-border-subtle/40 opacity-60' 
+                      ? 'bg-bg-surface/40 border-border-subtle/30 opacity-60' 
+                      : tx.type === 'reversal'
+                      ? 'bg-amber-500/10 border-amber-500/30'
                       : 'bg-bg-surface border-border-subtle/70'
                   }`}
                 >
-                  <div className="min-w-0 pr-2">
-                    <div className="flex items-center gap-1.5">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       {getTransactionIcon(tx.type)}
-                      <span className={`font-medium truncate text-[11px] ${tx.is_reversed ? 'line-through text-text-muted' : 'text-text-main'}`}>
+                      <span className={`font-semibold text-xs truncate ${tx.is_reversed ? 'line-through text-text-muted' : 'text-text-main'}`}>
                         {tx.from_player_name} → {tx.to_player_name}
                       </span>
                       {tx.is_reversed && (
-                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-white/[0.06] text-text-subtle border border-border-subtle shrink-0">
-                          Geri Alındı
+                        <span className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.2 rounded bg-rose-500/15 text-rose-300 border border-rose-500/30 shrink-0 font-bold">
+                          <RotateCcw className="w-2.5 h-2.5" />
+                          <span>İptal Edildi</span>
+                        </span>
+                      )}
+                      {tx.type === 'reversal' && (
+                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 shrink-0 font-bold">
+                          İade Kaydı
                         </span>
                       )}
                     </div>
@@ -213,10 +238,11 @@ export const HistoryViewModal: React.FC<HistoryViewModalProps> = ({
                           setError(null);
                           setConfirmTx(tx);
                         }}
-                        className="p-1 rounded hover:bg-white/[0.08] text-text-subtle hover:text-amber-400 transition-colors cursor-pointer"
-                        title="Hatalı işlemi geri al"
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 transition-all active:scale-95 cursor-pointer shadow-sm"
+                        title="Bu transferi iptal et ve parayı iade et"
                       >
-                        <RotateCcw className="w-3.5 h-3.5" />
+                        <RotateCcw className="w-3 h-3 stroke-[2.2]" />
+                        <span>Geri Al</span>
                       </button>
                     )}
                   </div>

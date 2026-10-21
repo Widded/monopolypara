@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Shield, Plus, Minus, AlertTriangle, Loader2, Trophy } from 'lucide-react';
+import { X, Shield, Plus, Minus, AlertTriangle, Loader2, Trophy, RotateCcw } from 'lucide-react';
 import { Player, Room, Transaction } from '../types';
 import { formatMoney } from '../utils/formatters';
 import { Keypad } from './Keypad';
@@ -20,6 +20,7 @@ export const BankerPanelModal: React.FC<BankerPanelModalProps> = ({
   onClose,
   players,
   onAdjustBalance,
+  onOpenHistory,
   onOpenStats,
 }) => {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>(players[0]?.id || '');
@@ -212,22 +213,36 @@ export const BankerPanelModal: React.FC<BankerPanelModalProps> = ({
             </button>
           </form>
 
-          {/* Masa İstatistikleri & Oyunu Bitir */}
-          {onOpenStats && (
-            <div className="pt-2.5 border-t border-border-subtle mt-3">
+          {/* Alt Hızlı Eylemler: Hatalı İşlem Geri Al & Masa Raporu */}
+          <div className="pt-2.5 border-t border-border-subtle mt-3 grid grid-cols-2 gap-2">
+            {onOpenHistory && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenHistory();
+                }}
+                className="w-full py-2 px-2 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+                <span>İşlemi Geri Al</span>
+              </button>
+            )}
+
+            {onOpenStats && (
               <button
                 type="button"
                 onClick={() => {
                   onClose();
                   onOpenStats();
                 }}
-                className="w-full py-2 px-3 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                className="w-full py-2 px-2 rounded-xl border border-accent/30 bg-accent/10 hover:bg-accent/20 text-accent text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
-                <Trophy className="w-3.5 h-3.5 text-amber-400" />
-                <span>Masa İstatistikleri ve Oyunu Bitir</span>
+                <Trophy className="w-3.5 h-3.5 text-accent" />
+                <span>Masa Raporu</span>
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>
