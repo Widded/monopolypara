@@ -1,7 +1,7 @@
 import React from 'react';
 import { Activity, Coins } from 'lucide-react';
 import { Transaction } from '../types';
-import { formatMoney, formatTime, TRANSACTION_TYPE_LABELS } from '../utils/formatters';
+import { formatMoney } from '../utils/formatters';
 
 interface SummaryCardProps {
   playerCount: number;
@@ -16,51 +16,37 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({
   onOpenHistory,
 }) => {
   return (
-    <div className="bg-bg-surface/60 border border-border-subtle rounded-xl p-3 flex items-center justify-between gap-3 text-xs">
-      {/* Total cash in play */}
-      <div className="flex items-center gap-2">
-        <div className="w-7 h-7 rounded-lg bg-bg-card border border-border-subtle flex items-center justify-center text-accent">
-          <Coins className="w-3.5 h-3.5" />
-        </div>
-        <div>
-          <div className="text-[10px] text-text-muted uppercase tracking-wider font-medium">Toplam Para</div>
-          <div className="font-money font-semibold text-text-main text-xs">{formatMoney(totalCash)}</div>
-        </div>
+    <div className="bg-bg-surface/70 border border-border-subtle rounded-xl px-3 py-2 flex items-center justify-between gap-2 text-xs">
+      {/* Total cash */}
+      <div className="flex items-center gap-1.5 shrink-0">
+        <Coins className="w-3.5 h-3.5 text-accent shrink-0" />
+        <span className="text-[11px] text-text-muted">Toplam:</span>
+        <span className="font-money font-bold text-text-main text-xs">
+          {formatMoney(totalCash)}
+        </span>
       </div>
 
       {/* Divider */}
-      <div className="h-6 w-[1px] bg-border-subtle shrink-0" />
+      <div className="h-3.5 w-[1px] bg-border-subtle shrink-0" />
 
       {/* Last Transaction snippet */}
       <button
         onClick={onOpenHistory}
-        className="flex items-center gap-2 overflow-hidden text-left hover:opacity-80 transition-opacity"
-        title="İşlem geçmişini görüntüle"
+        className="flex items-center gap-1.5 overflow-hidden text-left hover:text-accent transition-colors min-w-0"
+        title="İşlem geçmişini aç"
       >
-        <div className="w-7 h-7 rounded-lg bg-bg-card border border-border-subtle flex items-center justify-center text-text-muted shrink-0">
-          <Activity className="w-3.5 h-3.5 text-text-muted" />
-        </div>
-        <div className="min-w-0">
-          <div className="text-[10px] text-text-muted uppercase tracking-wider font-medium flex items-center gap-1">
-            <span>Son İşlem</span>
-            {lastTransaction && (
-              <span className="text-[9px] text-text-muted/70">
-                · {formatTime(lastTransaction.created_at)}
+        <Activity className="w-3 h-3 text-text-muted shrink-0" />
+        <div className="truncate text-[11px]">
+          {lastTransaction ? (
+            <span className="truncate">
+              {lastTransaction.from_player_name} → {lastTransaction.to_player_name}{' '}
+              <span className="font-money font-semibold text-accent">
+                {formatMoney(lastTransaction.amount)}
               </span>
-            )}
-          </div>
-          <div className="text-text-main truncate text-xs font-medium">
-            {lastTransaction ? (
-              <span>
-                {lastTransaction.from_player_name} → {lastTransaction.to_player_name}{' '}
-                <span className="font-money font-semibold text-accent">
-                  {formatMoney(lastTransaction.amount)}
-                </span>
-              </span>
-            ) : (
-              <span className="text-text-muted">Henüz işlem yok</span>
-            )}
-          </div>
+            </span>
+          ) : (
+            <span className="text-text-muted">İşlem geçmişi boş</span>
+          )}
         </div>
       </button>
     </div>

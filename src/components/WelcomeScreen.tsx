@@ -59,7 +59,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-3 bg-bg-main select-none">
+    <div className="h-[100dvh] w-full flex flex-col items-center justify-center p-3 bg-bg-main select-none overflow-y-auto">
       <div className="w-full max-w-sm">
         {/* Brand / Logo */}
         <div className="text-center mb-5">

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Send, Shield, User, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { Shield, ChevronRight, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { Player } from '../types';
 import { formatMoney } from '../utils/formatters';
 
@@ -13,7 +13,6 @@ interface PlayerCardProps {
 export const PlayerCard: React.FC<PlayerCardProps> = ({
   player,
   isCurrentPlayer,
-  onSendMoney,
   onSelectPlayer,
 }) => {
   const prevBalanceRef = useRef(player.balance);
@@ -38,16 +37,16 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   return (
     <div
       onClick={() => onSelectPlayer(player)}
-      className={`card relative overflow-hidden cursor-pointer group hover:border-[#39424E] transition-all duration-200 ${
+      className={`card relative overflow-hidden cursor-pointer active:scale-[0.99] transition-all p-3 rounded-xl border ${
         isCurrentPlayer
-          ? 'ring-1 ring-accent/30 bg-[#161a20]'
-          : 'bg-bg-card'
+          ? 'border-accent/40 bg-[#161a20]'
+          : 'border-border-subtle bg-bg-card hover:border-[#39424E]'
       }`}
     >
-      {/* Balance change subtle indicator pulse */}
+      {/* Pulse flash effect on balance change */}
       {balanceChange && (
         <div
-          className={`absolute inset-0 pointer-events-none transition-opacity duration-500 ${
+          className={`absolute inset-0 pointer-events-none transition-opacity duration-300 ${
             balanceChange === 'up'
               ? 'bg-money-pos/10 animate-pulse'
               : 'bg-money-neg/10 animate-pulse'
@@ -55,99 +54,71 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
         />
       )}
 
-      {/* Top row: Player Name & Badges */}
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-base text-text-main group-hover:text-accent transition-colors">
+      {/* Row 1: Player Name + Badges + Chevron */}
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="font-bold text-sm text-text-main truncate">
             {player.name}
           </span>
 
           {isCurrentPlayer && (
-            <span className="bg-accent/15 text-accent border border-accent/30 text-[11px] font-medium px-2 py-0.5 rounded-full">
+            <span className="bg-accent/15 text-accent border border-accent/30 text-[10px] font-semibold px-1.5 py-0.2 rounded-full">
               Sen
             </span>
           )}
 
           {player.is_banker && (
-            <span
-              className="flex items-center gap-1 bg-[#1F2633] text-[#7E99D3] border border-[#2B3547] text-[10px] font-medium px-1.5 py-0.5 rounded-md"
-              title="Oda Sahibi / Bankacı"
-            >
+            <span className="flex items-center gap-0.5 bg-[#1F2633] text-[#7E99D3] border border-[#2B3547] text-[10px] font-medium px-1.5 py-0.2 rounded">
               <Shield className="w-2.5 h-2.5 text-[#7E99D3]" />
               Bankacı
             </span>
           )}
         </div>
 
-        <span className="text-[11px] text-text-muted flex items-center gap-1 group-hover:text-text-main transition-colors">
-          <User className="w-3 h-3" />
-          <span>Detay</span>
-        </span>
+        <ChevronRight className="w-4 h-4 text-text-muted/60 shrink-0" />
       </div>
 
-      {/* Center: Big, Bold Balance */}
-      <div className="flex items-baseline justify-between my-2">
-        <div>
-          <div className="text-[11px] text-text-muted font-medium uppercase tracking-wider mb-0.5">
-            Nakit Bakiye
-          </div>
-          <div
-            className={`font-money font-bold text-2xl sm:text-3xl tracking-tight transition-colors duration-300 ${
-              balanceChange === 'up'
-                ? 'text-money-pos'
-                : balanceChange === 'down'
-                ? 'text-money-neg'
-                : 'text-text-main'
+      {/* Row 2: Big Bold Balance */}
+      <div className="my-1">
+        <div
+          className={`font-money font-bold text-2xl tracking-tight leading-tight transition-colors duration-200 ${
+            balanceChange === 'up'
+              ? 'text-money-pos'
+              : balanceChange === 'down'
+              ? 'text-money-neg'
+              : 'text-text-main'
+          }`}
+        >
+          {formatMoney(player.balance)}
+        </div>
+      </div>
+
+      {/* Row 3: Alacak & Borç totals */}
+      <div className="flex items-center gap-2.5 pt-1.5 border-t border-border-subtle/50 text-[11px] text-text-muted">
+        <div className="flex items-center gap-1">
+          <ArrowUpRight className="w-3 h-3 text-money-pos shrink-0" />
+          <span>Alacak:</span>
+          <span
+            className={`font-money font-semibold ${
+              receivables > 0 ? 'text-money-pos' : 'text-text-muted'
             }`}
           >
-            {formatMoney(player.balance)}
-          </div>
+            {formatMoney(receivables)}
+          </span>
         </div>
 
-        {/* Quick Send Money Action Button */}
-        {!isCurrentPlayer && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onSendMoney(player);
-            }}
-            className="flex items-center gap-1.5 bg-bg-surface hover:bg-accent hover:text-bg-main text-text-main border border-border-subtle hover:border-accent text-xs font-semibold px-3 py-2 rounded-xl transition-all duration-150 active:scale-95 shrink-0"
-            title={`${player.name} adlı oyuncuya para gönder`}
+        <span className="text-border-subtle">·</span>
+
+        <div className="flex items-center gap-1">
+          <ArrowDownLeft className="w-3 h-3 text-money-neg shrink-0" />
+          <span>Borç:</span>
+          <span
+            className={`font-money font-semibold ${
+              debts > 0 ? 'text-money-neg' : 'text-text-muted'
+            }`}
           >
-            <Send className="w-3.5 h-3.5" />
-            <span>Para Gönder</span>
-          </button>
-        )}
-      </div>
-
-      {/* Bottom row: Alacak & Borç totals */}
-      <div className="pt-2 border-t border-border-subtle/60 flex items-center justify-between text-xs text-text-muted">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1">
-            <ArrowUpRight className="w-3 h-3 text-money-pos shrink-0" />
-            <span>Alacak:</span>
-            <span
-              className={`font-money font-medium ${
-                receivables > 0 ? 'text-money-pos' : 'text-text-muted'
-              }`}
-            >
-              {formatMoney(receivables)}
-            </span>
-          </div>
-
-          <span className="text-border-subtle">·</span>
-
-          <div className="flex items-center gap-1">
-            <ArrowDownLeft className="w-3 h-3 text-money-neg shrink-0" />
-            <span>Borç:</span>
-            <span
-              className={`font-money font-medium ${
-                debts > 0 ? 'text-money-neg' : 'text-text-muted'
-              }`}
-            >
-              {formatMoney(debts)}
-            </span>
-          </div>
+            {formatMoney(debts)}
+          </span>
         </div>
       </div>
     </div>

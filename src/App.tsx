@@ -225,7 +225,7 @@ export const App: React.FC = () => {
   const activeDebtsCount = debts.filter(d => d.status !== 'settled' && d.remaining_amount > 0).length;
 
   return (
-    <div className="min-h-screen bg-bg-main text-text-main flex flex-col pb-28">
+    <div className="h-[100dvh] w-full bg-bg-main text-text-main flex flex-col overflow-hidden">
       {/* Toast notifications */}
       <Toast toasts={toasts} onDismiss={dismissToast} />
 
@@ -239,8 +239,8 @@ export const App: React.FC = () => {
         onLeaveRoom={handleLeaveRoom}
       />
 
-      {/* Main Content Area (Max width mobile container) */}
-      <main className="flex-1 max-w-md w-full mx-auto px-4 py-4 space-y-4">
+      {/* Main Content Area - Scrollable viewport starting cleanly at top */}
+      <main className="flex-1 overflow-y-auto overscroll-contain max-w-md w-full mx-auto px-3 py-2.5 space-y-2.5">
         {/* Compact Summary */}
         <SummaryCard
           playerCount={players.length}
@@ -251,8 +251,8 @@ export const App: React.FC = () => {
 
         {/* Players List */}
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+          <div className="flex items-center justify-between mb-1.5 px-0.5">
+            <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">
               Oyuncular ({players.length})
             </span>
           </div>

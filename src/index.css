@@ -15,24 +15,39 @@
     --accent: #72E3A1;
   }
 
-  * {
-    border-color: #282D35;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  body {
+  html, body {
+    height: 100%;
+    height: 100dvh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
     background-color: #0B0D10;
     color: #F3F4F6;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 
+  #root {
+    height: 100%;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  * {
+    border-color: #282D35;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   /* Custom subtle scrollbars */
   ::-webkit-scrollbar {
-    width: 5px;
-    height: 5px;
+    width: 4px;
+    height: 4px;
   }
   ::-webkit-scrollbar-track {
-    background: #0B0D10;
+    background: transparent;
   }
   ::-webkit-scrollbar-thumb {
     background: #282D35;
@@ -46,23 +61,23 @@
 /* Custom UI helper components */
 @layer components {
   .btn-primary {
-    @apply flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-bg-main font-semibold px-4 py-3.5 rounded-xl transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+    @apply flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-bg-main font-semibold px-4 py-3 rounded-xl transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
   }
   
   .btn-secondary {
-    @apply flex items-center justify-center gap-2 bg-bg-surface hover:bg-[#232832] text-text-main font-medium border border-border-subtle px-4 py-3.5 rounded-xl transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+    @apply flex items-center justify-center gap-2 bg-bg-surface hover:bg-[#232832] text-text-main font-medium border border-border-subtle px-4 py-3 rounded-xl transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
   }
 
   .btn-danger {
-    @apply flex items-center justify-center gap-2 bg-money-neg/10 hover:bg-money-neg/20 text-money-neg font-medium border border-money-neg/30 px-4 py-3.5 rounded-xl transition-all duration-150 active:scale-[0.98];
+    @apply flex items-center justify-center gap-2 bg-money-neg/10 hover:bg-money-neg/20 text-money-neg font-medium border border-money-neg/30 px-4 py-3 rounded-xl transition-all duration-150 active:scale-[0.98];
   }
 
   .card {
-    @apply bg-bg-card border border-border-subtle rounded-2xl p-4 transition-colors;
+    @apply bg-bg-card border border-border-subtle rounded-xl p-3 transition-colors;
   }
 
   .input-field {
-    @apply w-full bg-bg-surface border border-border-subtle focus:border-accent focus:ring-1 focus:ring-accent text-text-main placeholder-text-muted rounded-xl px-4 py-3.5 text-base outline-none transition-all;
+    @apply w-full bg-bg-surface border border-border-subtle focus:border-accent focus:ring-1 focus:ring-accent text-text-main placeholder-text-muted rounded-xl px-3.5 py-2.5 text-sm outline-none transition-all;
   }
 
   .money-badge-pos {
