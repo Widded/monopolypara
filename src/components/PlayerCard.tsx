@@ -107,14 +107,22 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
           </div>
 
           {/* Borç & Alacak Detayları: "Borcu var: x Alacağı var: x" */}
-          <div className="flex items-center gap-1.5 mt-0.5 text-[10.5px] text-text-muted flex-wrap">
-            <span className={debts > 0 ? 'text-rose-400 font-medium' : 'text-text-subtle'}>
-              Borcu var: <strong className="font-money font-semibold">{formatMoney(debts)}</strong>
-            </span>
-            <span className="text-text-subtle text-[10px]">·</span>
-            <span className={receivables > 0 ? 'text-emerald-400 font-medium' : 'text-text-subtle'}>
-              Alacağı var: <strong className="font-money font-semibold">{formatMoney(receivables)}</strong>
-            </span>
+          <div className="flex items-center gap-2 mt-1 text-xs flex-wrap">
+            <div className={`inline-flex items-center gap-1 text-[11px] ${debts > 0 ? 'bg-rose-500/15 border border-rose-500/30 px-1.5 py-0.5 rounded-md' : ''}`}>
+              <span className={debts > 0 ? 'text-rose-200 font-medium' : 'text-text-muted'}>Borcu var:</span>
+              <span className="font-money font-bold text-rose-400">
+                {formatMoney(debts)}
+              </span>
+            </div>
+
+            <span className="text-white/20 text-[10px]">·</span>
+
+            <div className={`inline-flex items-center gap-1 text-[11px] ${receivables > 0 ? 'bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 rounded-md' : ''}`}>
+              <span className={receivables > 0 ? 'text-emerald-200 font-medium' : 'text-text-muted'}>Alacağı var:</span>
+              <span className="font-money font-bold text-emerald-400">
+                {formatMoney(receivables)}
+              </span>
+            </div>
           </div>
         </div>
       </div>
