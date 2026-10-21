@@ -14,18 +14,18 @@ interface PlayerCardProps {
 function getPlayerTokenStyle(name: string, isCurrentPlayer: boolean) {
   if (isCurrentPlayer) {
     return {
-      bg: 'bg-emerald-500/20',
-      border: 'border-emerald-500/40',
-      text: 'text-emerald-300',
+      bg: 'bg-accent/20',
+      border: 'border-accent/40',
+      text: 'text-accent',
     };
   }
   const styles = [
-    { bg: 'bg-blue-500/20', border: 'border-blue-500/40', text: 'text-blue-300' },
-    { bg: 'bg-amber-500/20', border: 'border-amber-500/40', text: 'text-amber-300' },
-    { bg: 'bg-rose-500/20', border: 'border-rose-500/40', text: 'text-rose-300' },
-    { bg: 'bg-purple-500/20', border: 'border-purple-500/40', text: 'text-purple-300' },
-    { bg: 'bg-cyan-500/20', border: 'border-cyan-500/40', text: 'text-cyan-300' },
-    { bg: 'bg-teal-500/20', border: 'border-teal-500/40', text: 'text-teal-300' },
+    { bg: 'bg-blue-500/15', border: 'border-blue-500/30', text: 'text-blue-300' },
+    { bg: 'bg-amber-500/15', border: 'border-amber-500/30', text: 'text-amber-300' },
+    { bg: 'bg-purple-500/15', border: 'border-purple-500/30', text: 'text-purple-300' },
+    { bg: 'bg-slate-500/15', border: 'border-slate-400/30', text: 'text-slate-300' },
+    { bg: 'bg-emerald-500/15', border: 'border-emerald-500/30', text: 'text-emerald-300' },
+    { bg: 'bg-indigo-500/15', border: 'border-indigo-500/30', text: 'text-indigo-300' },
   ];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
@@ -67,8 +67,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
       onClick={() => onSelectPlayer(player)}
       className={`group rounded-2xl p-3 sm:p-3.5 transition-all duration-150 cursor-pointer select-none flex items-center justify-between gap-3 border active:scale-[0.99] ${
         isCurrentPlayer
-          ? 'bg-gradient-to-r from-[#141F2C] via-[#111724] to-[#0D121D] border-emerald-500/35 shadow-md shadow-emerald-950/20'
-          : 'bg-gradient-to-r from-[#121624]/90 to-[#0E111B]/90 hover:from-[#161B2C] hover:to-[#111624] border-white/[0.07] hover:border-white/[0.14] shadow-sm'
+          ? 'bg-bg-surface/90 hover:bg-bg-surface border-accent/40 shadow-lg shadow-black/30 ring-1 ring-accent/20'
+          : 'bg-bg-surface/40 hover:bg-bg-surface/80 border-border-subtle hover:border-border-active shadow-sm'
       }`}
     >
       {/* Sol: Avatar Tokeni + İsim + Rozetler */}
@@ -79,20 +79,20 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
         >
           {initial}
           {isCurrentPlayer && (
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#141F2C] absolute -top-1 -right-1 shadow-sm" />
+            <span className="w-2.5 h-2.5 rounded-full bg-accent border-2 border-bg-card absolute -top-1 -right-1 shadow-sm" />
           )}
         </div>
 
         {/* İsim ve Durum */}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="font-bold text-[15px] text-white tracking-tight truncate">
+            <span className="font-bold text-[15px] text-text-main tracking-tight truncate">
               {safePlayerName}
             </span>
 
             {/* Sen Rozeti */}
             {isCurrentPlayer && (
-              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.2 rounded-md tracking-wider shrink-0">
+              <span className="text-[10px] font-bold text-accent bg-accent/15 border border-accent/30 px-1.5 py-0.2 rounded-md tracking-wider shrink-0">
                 SEN
               </span>
             )}
@@ -113,20 +113,20 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
             )}
           </div>
 
-          {/* Borç & Alacak Detayları: "Borcu var: x Alacağı var: x" */}
+          {/* Borç & Alacak Detayları: 0 ₺ ise nötr gri, >0 ise renkli */}
           <div className="flex items-center gap-2 mt-1 text-xs flex-wrap">
             <div className={`inline-flex items-center gap-1 text-[11px] ${debts > 0 ? 'bg-rose-500/15 border border-rose-500/30 px-1.5 py-0.5 rounded-md' : ''}`}>
               <span className={debts > 0 ? 'text-rose-200 font-medium' : 'text-text-muted'}>Borcu var:</span>
-              <span className="font-money font-bold text-rose-400">
+              <span className={`font-money font-bold ${debts > 0 ? 'text-rose-400' : 'text-text-subtle'}`}>
                 {formatMoney(debts)}
               </span>
             </div>
 
-            <span className="text-white/20 text-[10px]">·</span>
+            <span className="text-border-subtle text-[10px]">·</span>
 
             <div className={`inline-flex items-center gap-1 text-[11px] ${receivables > 0 ? 'bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 rounded-md' : ''}`}>
               <span className={receivables > 0 ? 'text-emerald-200 font-medium' : 'text-text-muted'}>Alacağı var:</span>
-              <span className="font-money font-bold text-emerald-400">
+              <span className={`font-money font-bold ${receivables > 0 ? 'text-emerald-400' : 'text-text-subtle'}`}>
                 {formatMoney(receivables)}
               </span>
             </div>
@@ -142,10 +142,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               player.is_bankrupt
                 ? 'text-text-muted line-through'
                 : balanceChange === 'up'
-                ? 'text-emerald-400'
+                ? 'text-money-pos'
                 : balanceChange === 'down'
-                ? 'text-rose-400'
-                : 'text-white'
+                ? 'text-money-neg'
+                : 'text-text-main'
             }`}
           >
             {formatMoney(player.balance)}
@@ -159,7 +159,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               e.stopPropagation();
               onSendMoney(player);
             }}
-            className="flex items-center gap-1 text-xs font-bold text-emerald-400 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 px-2.5 py-1.5 rounded-xl transition-all active:scale-95 cursor-pointer shrink-0"
+            className="flex items-center gap-1 text-xs font-bold text-accent bg-accent/15 hover:bg-accent/25 border border-accent/30 px-2.5 py-1.5 rounded-xl transition-all active:scale-95 cursor-pointer shrink-0"
             title={`${safePlayerName} adlı oyuncuya para gönder`}
           >
             <Send className="w-3.5 h-3.5 stroke-[2.2]" />

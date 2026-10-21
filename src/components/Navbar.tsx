@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Copy, Check, RotateCw } from 'lucide-react';
+import { Shield, Copy, Check, RotateCw, Palette } from 'lucide-react';
 import { Room, Player } from '../types';
 
 interface NavbarProps {
@@ -11,6 +11,7 @@ interface NavbarProps {
   onRefresh?: () => void;
   onOpenBankerPanel: () => void;
   onLeaveRoom: () => void;
+  onOpenThemeModal?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -22,6 +23,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onRefresh,
   onOpenBankerPanel,
   onLeaveRoom,
+  onOpenThemeModal,
 }) => {
   const [copied, setCopied] = useState(false);
 
@@ -37,11 +39,11 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="shrink-0 z-30 bg-bg-main/95 backdrop-blur-md border-b border-white/[0.07] px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-3">
+    <header className="shrink-0 z-30 bg-bg-main/95 backdrop-blur-md border-b border-border-subtle px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-3">
       <div className="max-w-md mx-auto flex items-center justify-between gap-3">
-        {/* Sol: Logo + Oda Kodu Hapı + Yenileme Butonu */}
+        {/* Sol: Logo + Oda Kodu Hapı + Yenileme & Tema Butonu */}
         <div className="flex items-center gap-2 min-w-0">
-          <span className="font-extrabold text-[16px] tracking-tight text-white select-none shrink-0">
+          <span className="font-extrabold text-[16px] tracking-tight text-text-main select-none shrink-0">
             MONOPOLY
           </span>
 
@@ -49,21 +51,21 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             type="button"
             onClick={handleCopyCode}
-            className="flex items-center gap-1.5 bg-[#141824] hover:bg-[#1A2030] border border-white/[0.08] hover:border-white/[0.16] px-2.5 py-1 rounded-full transition-all active:scale-95 cursor-pointer group shadow-sm select-none"
+            className="flex items-center gap-1.5 bg-bg-surface hover:bg-bg-hover border border-border-subtle hover:border-border-active px-2.5 py-1 rounded-full transition-all active:scale-95 cursor-pointer group shadow-sm select-none"
             title="Oda kodunu kopyala"
           >
             <span
               className={`w-2 h-2 rounded-full shrink-0 transition-all ${
                 isLive
-                  ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)] animate-pulse'
+                  ? 'bg-accent shadow-[0_0_8px_var(--accent)] animate-pulse'
                   : 'bg-text-subtle'
               }`}
             />
-            <span className="font-mono text-xs font-bold text-text-muted group-hover:text-white tracking-wider">
+            <span className="font-mono text-xs font-bold text-text-muted group-hover:text-text-main tracking-wider">
               {room.code}
             </span>
             {copied ? (
-              <Check className="w-3 h-3 text-emerald-400" />
+              <Check className="w-3 h-3 text-accent" />
             ) : (
               <Copy className="w-3 h-3 text-text-subtle group-hover:text-text-muted transition-colors opacity-70" />
             )}
@@ -75,10 +77,22 @@ export const Navbar: React.FC<NavbarProps> = ({
               type="button"
               onClick={onRefresh}
               disabled={isRefreshing}
-              className="flex items-center justify-center w-7 h-7 rounded-full bg-[#141824] hover:bg-[#1A2030] border border-white/[0.08] hover:border-white/[0.16] text-text-muted hover:text-white transition-all active:scale-90 disabled:opacity-60 cursor-pointer"
+              className="flex items-center justify-center w-7 h-7 rounded-full bg-bg-surface hover:bg-bg-hover border border-border-subtle hover:border-border-active text-text-muted hover:text-text-main transition-all active:scale-90 disabled:opacity-60 cursor-pointer"
               title="Odayı ve oyuncuları yenile"
             >
               <RotateCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-accent' : ''}`} />
+            </button>
+          )}
+
+          {/* Tema Değiştir Butonu */}
+          {onOpenThemeModal && (
+            <button
+              type="button"
+              onClick={onOpenThemeModal}
+              className="flex items-center justify-center w-7 h-7 rounded-full bg-bg-surface hover:bg-bg-hover border border-border-subtle hover:border-border-active text-text-muted hover:text-accent transition-all active:scale-90 cursor-pointer"
+              title="Renk Temasını Değiştir"
+            >
+              <Palette className="w-3.5 h-3.5" />
             </button>
           )}
         </div>

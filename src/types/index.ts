@@ -87,3 +87,14 @@ export interface RoomState {
   debts: Debt[];
   transactions: Transaction[];
 }
+
+export type ThemeId = 'fintech' | 'royal' | 'midnight' | 'cyber';
+
+export interface ThemeOption {
+  id: ThemeId;
+  name: string;
+  tagline: string;
+  accentColor: string;
+  cardBg: string;
+  previewBg: string;
+}

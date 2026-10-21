@@ -3,16 +3,76 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --bg-main: #08090C;
-    --bg-card: #101318;
-    --bg-surface: #161A22;
-    --border-subtle: #1C2028;
-    --text-main: #F4F5F7;
-    --text-muted: #828896;
-    --money-pos: #2ED573;
-    --money-neg: #FF5252;
-    --accent: #2ED573;
+  /* 1. FINTECH MINIMAL (Varsayılan - Apple & Revolut Stili) */
+  :root, [data-theme="fintech"] {
+    --bg-main: #090B0E;
+    --bg-card: #11141B;
+    --bg-surface: #171C26;
+    --bg-hover: #1E2432;
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-active: rgba(255, 255, 255, 0.2);
+    --text-main: #F4F6FB;
+    --text-muted: #828B9C;
+    --text-subtle: #4D5566;
+    --money-pos: #10B981;
+    --money-neg: #EF4444;
+    --accent: #10B981;
+    --accent-hover: #059669;
+    --accent-subtle: rgba(16, 185, 129, 0.12);
+  }
+
+  /* 2. MONOPOLY ROYAL (Klasik Monopoly Zümrütü & Şampanya Altını) */
+  [data-theme="royal"] {
+    --bg-main: #060D0A;
+    --bg-card: #0B1712;
+    --bg-surface: #12241C;
+    --bg-hover: #193026;
+    --border-subtle: rgba(212, 175, 55, 0.15);
+    --border-active: rgba(212, 175, 55, 0.35);
+    --text-main: #F7FAF8;
+    --text-muted: #8AA497;
+    --text-subtle: #4D695C;
+    --money-pos: #34D399;
+    --money-neg: #F87171;
+    --accent: #D4AF37;
+    --accent-hover: #BF9B30;
+    --accent-subtle: rgba(212, 175, 55, 0.15);
+  }
+
+  /* 3. MIDNIGHT TITANIUM (Tamamen Mat & Monokrom / Sıfır Parlama) */
+  [data-theme="midnight"] {
+    --bg-main: #050507;
+    --bg-card: #0C0D11;
+    --bg-surface: #14151B;
+    --bg-hover: #1B1D25;
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-active: rgba(255, 255, 255, 0.22);
+    --text-main: #FFFFFF;
+    --text-muted: #8B8F9E;
+    --text-subtle: #515463;
+    --money-pos: #E2E8F0;
+    --money-neg: #F87171;
+    --accent: #E2E8F0;
+    --accent-hover: #CBD5E1;
+    --accent-subtle: rgba(255, 255, 255, 0.12);
+  }
+
+  /* 4. CYBER GLOW (Canlı Neon Arcade) */
+  [data-theme="cyber"] {
+    --bg-main: #060913;
+    --bg-card: #0C1222;
+    --bg-surface: #121A30;
+    --bg-hover: #192544;
+    --border-subtle: rgba(0, 240, 255, 0.15);
+    --border-active: rgba(0, 240, 255, 0.35);
+    --text-main: #FFFFFF;
+    --text-muted: #7E92B8;
+    --text-subtle: #455778;
+    --money-pos: #00F0FF;
+    --money-neg: #FF3366;
+    --accent: #00F0FF;
+    --accent-hover: #00D0DE;
+    --accent-subtle: rgba(0, 240, 255, 0.15);
   }
 
   html, body {
@@ -23,8 +83,8 @@
     overflow: hidden;
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
-    background-color: #08090C;
-    color: #F4F5F7;
+    background-color: var(--bg-main);
+    color: var(--text-main);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     letter-spacing: -0.011em;
   }
@@ -35,10 +95,11 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    background-color: var(--bg-main);
   }
 
   * {
-    border-color: #1C2028;
+    border-color: var(--border-subtle);
     -webkit-tap-highlight-color: transparent;
   }
 
@@ -51,7 +112,7 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: #1C2028;
+    background: var(--border-subtle);
     border-radius: 9999px;
   }
 }

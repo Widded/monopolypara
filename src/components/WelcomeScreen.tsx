@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, LogIn, ArrowRight, AlertTriangle, Loader2, KeyRound, UserCheck, Lightbulb } from 'lucide-react';
+import { PlusCircle, LogIn, ArrowRight, AlertTriangle, Loader2, KeyRound, UserCheck, Lightbulb, Palette } from 'lucide-react';
 import { resetSessionToken } from '../utils/formatters';
 
 interface WelcomeScreenProps {
   onCreateRoom: (playerName: string) => Promise<void>;
   onJoinRoom: (roomCode: string, playerName: string) => Promise<void>;
   onReconnectWithPin: (roomCode: string, pin: string) => Promise<void>;
+  onOpenThemeModal?: () => void;
 }
 
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   onCreateRoom,
   onJoinRoom,
   onReconnectWithPin,
+  onOpenThemeModal,
 }) => {
   const [mode, setMode] = useState<'selection' | 'create' | 'join'>('selection');
   const [joinType, setJoinType] = useState<'new' | 'reconnect'>('new');
@@ -96,7 +98,18 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   };
 
   return (
-    <div className="h-[100dvh] w-full flex flex-col items-center justify-center p-3.5 bg-bg-main overflow-y-auto">
+    <div className="h-[100dvh] w-full flex flex-col items-center justify-center p-3.5 bg-bg-main overflow-y-auto relative">
+      {onOpenThemeModal && (
+        <button
+          type="button"
+          onClick={onOpenThemeModal}
+          className="absolute top-4 right-4 flex items-center justify-center w-8 h-8 rounded-full bg-bg-surface hover:bg-bg-hover border border-border-subtle hover:border-border-active text-text-muted hover:text-accent transition-all active:scale-95 cursor-pointer shadow-sm"
+          title="Renk Temasını Değiştir"
+        >
+          <Palette className="w-4 h-4" />
+        </button>
+      )}
+
       <div className="w-full max-w-sm my-auto">
         {/* Brand / Logo */}
         <div className="text-center mb-6">

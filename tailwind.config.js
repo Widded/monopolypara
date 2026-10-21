@@ -8,28 +8,28 @@ export default {
     extend: {
       colors: {
         bg: {
-          main: '#08090C',    // Derin, mat, sakin siyah/obsidiyen
-          card: '#101318',    // Mat sakin yüzey
-          surface: '#161A22', // İkincil interaktif yüzey
-          hover: '#1B202A',   // Hover durumu
+          main: 'var(--bg-main)',
+          card: 'var(--bg-card)',
+          surface: 'var(--bg-surface)',
+          hover: 'var(--bg-hover)',
         },
         border: {
-          subtle: '#1C2028',  // Kılcal, zarif 1px ayırıcılar
-          active: '#2A313E',  // Odaklanmış/aktif sınırlar
+          subtle: 'var(--border-subtle)',
+          active: 'var(--border-active)',
         },
         text: {
-          main: '#F4F5F7',    // Kırık beyaz, yüksek kontrast
-          muted: '#828896',   // Ölçülü editoryal gri
-          subtle: '#525765',  // İkincil silik detaylar
+          main: 'var(--text-main)',
+          muted: 'var(--text-muted)',
+          subtle: 'var(--text-subtle)',
         },
         money: {
-          pos: '#2ED573',     // Canlı fakat doğal para yeşili
-          neg: '#FF5252',     // Doğal kırmızı
+          pos: 'var(--money-pos)',
+          neg: 'var(--money-neg)',
         },
         accent: {
-          DEFAULT: '#2ED573',
-          hover: '#26af5f',
-          subtle: 'rgba(46, 213, 115, 0.12)',
+          DEFAULT: 'var(--accent)',
+          hover: 'var(--accent-hover)',
+          subtle: 'var(--accent-subtle)',
         }
       },
       fontFamily: {

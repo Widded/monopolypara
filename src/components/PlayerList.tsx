@@ -41,7 +41,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({
       {me && (
         <div className="space-y-1.5">
           <div className="flex items-center justify-between px-1 text-xs">
-            <div className={`flex items-center gap-1.5 font-bold text-[10px] uppercase tracking-wider ${me.is_bankrupt ? 'text-red-400' : 'text-emerald-400'}`}>
+            <div className={`flex items-center gap-1.5 font-bold text-[10px] uppercase tracking-wider ${me.is_bankrupt ? 'text-red-400' : 'text-accent'}`}>
               {me.is_bankrupt ? (
                 <>
                   <Skull className="w-3 h-3 text-red-400" />
@@ -49,7 +49,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({
                 </>
               ) : (
                 <>
-                  <User className="w-3 h-3 text-emerald-400" />
+                  <User className="w-3 h-3 text-accent" />
                   <span>Senin Durumun</span>
                 </>
               )}

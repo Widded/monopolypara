@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import confetti from 'canvas-confetti';
 import { dataService } from './services/dataService';
-import { Room, Player, Debt, Transaction, RoomState } from './types';
+import { Room, Player, Debt, Transaction, RoomState, ThemeId } from './types';
 import { Navbar } from './components/Navbar';
 import { SummaryCard } from './components/SummaryCard';
 import { PlayerList } from './components/PlayerList';
@@ -14,6 +14,7 @@ import { DebtDetailModal } from './components/DebtDetailModal';
 import { BankerPanelModal } from './components/BankerPanelModal';
 import { PlayerDetailModal } from './components/PlayerDetailModal';
 import { HistoryViewModal } from './components/HistoryViewModal';
+import { ThemeModal } from './components/ThemeModal';
 import { PendingDebtBanner } from './components/PendingDebtBanner';
 import { Toast, ToastMessage } from './components/Toast';
 
@@ -42,6 +43,24 @@ export const App: React.FC = () => {
 
   const [detailPlayer, setDetailPlayer] = useState<Player | null>(null);
   const [detailDebt, setDetailDebt] = useState<Debt | null>(null);
+
+  // Theme state
+  const [theme, setTheme] = useState<ThemeId>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('monopoly_theme') as ThemeId) || 'fintech';
+    }
+    return 'fintech';
+  });
+  const [isThemeOpen, setIsThemeOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-theme', theme);
+      try {
+        localStorage.setItem('monopoly_theme', theme);
+      } catch {}
+    }
+  }, [theme]);
 
   const addToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'success') => {
     const id = Math.random().toString(36).substring(2, 9);
@@ -466,6 +485,13 @@ export const App: React.FC = () => {
           onCreateRoom={handleCreateRoom}
           onJoinRoom={handleJoinRoom}
           onReconnectWithPin={handleReconnectWithPin}
+          onOpenThemeModal={() => setIsThemeOpen(true)}
+        />
+        <ThemeModal
+          isOpen={isThemeOpen}
+          onClose={() => setIsThemeOpen(false)}
+          currentTheme={theme}
+          onSelectTheme={setTheme}
         />
       </>
     );
@@ -491,6 +517,7 @@ export const App: React.FC = () => {
         onRefresh={handleManualRefresh}
         onOpenBankerPanel={() => setIsBankerOpen(true)}
         onLeaveRoom={handleLeaveRoom}
+        onOpenThemeModal={() => setIsThemeOpen(true)}
       />
 
       {/* Main Content Area - Scrollable viewport starting cleanly at top */}
@@ -620,6 +647,13 @@ export const App: React.FC = () => {
         onClose={() => setIsHistoryOpen(false)}
         transactions={transactions}
         players={players}
+      />
+
+      <ThemeModal
+        isOpen={isThemeOpen}
+        onClose={() => setIsThemeOpen(false)}
+        currentTheme={theme}
+        onSelectTheme={(t) => setTheme(t)}
       />
     </div>
   );
