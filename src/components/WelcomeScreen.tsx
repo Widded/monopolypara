@@ -125,9 +125,24 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         </div>
 
         {error && (
-          <div className="mb-3.5 p-2.5 rounded-xl bg-money-neg/10 border border-money-neg/30 flex items-center gap-2 text-xs text-money-neg animate-in fade-in">
-            <AlertTriangle className="w-4 h-4 shrink-0" />
-            <span className="truncate">{error}</span>
+          <div className="mb-3.5 p-2.5 rounded-xl bg-money-neg/10 border border-money-neg/30 flex flex-col gap-2 text-xs text-money-neg animate-in fade-in">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span className="leading-tight">{error}</span>
+            </div>
+            {mode === 'join' && joinType === 'new' && (error.toLowerCase().includes('pin') || error.toLowerCase().includes('zaten var')) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setJoinType('reconnect');
+                  setError(null);
+                }}
+                className="mt-0.5 self-start px-2.5 py-1 bg-accent/20 border border-accent/40 text-accent rounded-lg text-xs font-semibold hover:bg-accent/30 transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <KeyRound className="w-3.5 h-3.5" />
+                <span>PIN ile Giriş Yap</span>
+              </button>
+            )}
           </div>
         )}
 

@@ -78,8 +78,9 @@ export const mockStorage = {
 
   joinRoom(roomCode: string, playerName: string, sessionToken: string): { room: Room; player: Player } {
     const data = loadData();
+    const normalize = (c: string) => c.toUpperCase().replace(/^WID-/, '').trim();
     const room = Object.values(data.rooms).find(
-      r => r.code.toUpperCase() === roomCode.trim().toUpperCase() && r.status === 'active'
+      r => (normalize(r.code) === normalize(roomCode) || r.code.toUpperCase() === roomCode.trim().toUpperCase()) && r.status === 'active'
     );
 
     if (!room) {
@@ -99,7 +100,7 @@ export const mockStorage = {
       p => p.room_id === room.id && p.name.trim().toLowerCase() === playerName.trim().toLowerCase()
     );
     if (existingPlayerByName) {
-      throw new Error('Bu isimde bir oyuncu zaten odada var. Eğer bu sizseniz Kurtarma Kodu ile geri bağlanabilirsiniz.');
+      throw new Error(`Masada "${playerName.trim()}" isminde bir oyuncu zaten var. Eğer bu sizseniz "Geri Dön (PIN)" sekmesinden PIN kodunuzla bağlanabilirsiniz.`);
     }
 
     const playerId = 'player_' + Math.random().toString(36).substring(2, 9);
@@ -122,16 +123,18 @@ export const mockStorage = {
 
   reconnectWithPin(roomCode: string, pin: string, sessionToken: string): { room: Room; player: Player } {
     const data = loadData();
+    const normalize = (c: string) => c.toUpperCase().replace(/^WID-/, '').trim();
     const room = Object.values(data.rooms).find(
-      r => r.code.toUpperCase() === roomCode.trim().toUpperCase() && r.status === 'active'
+      r => (normalize(r.code) === normalize(roomCode) || r.code.toUpperCase() === roomCode.trim().toUpperCase()) && r.status === 'active'
     );
 
     if (!room) {
       throw new Error('Oda bulunamadı veya kapatılmış.');
     }
 
+    const cleanPin = pin.trim().padStart(4, '0');
     const player = Object.values(data.players).find(
-      p => p.room_id === room.id && p.recovery_pin === pin.trim()
+      p => p.room_id === room.id && (p.recovery_pin === cleanPin || p.recovery_pin === pin.trim())
     );
 
     if (!player) {
@@ -140,6 +143,7 @@ export const mockStorage = {
 
     // Rebind session token
     player.session_token = sessionToken;
+    player.is_online = true;
     saveData(data);
 
     return { room, player };
@@ -156,7 +160,21 @@ export const mockStorage = {
       .filter(t => t.room_id === roomId)
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-    const currentPlayer = players.find(p => p.session_token === sessionToken) || players[0];
+    const activePlayerId = typeof window !== 'undefined' ? localStorage.getItem('monopoly_active_player_id') : null;
+    let currentPlayer = players.find(p => p.session_token === sessionToken);
+    if (!currentPlayer && activePlayerId) {
+      const found = players.find(p => p.id === activePlayerId);
+      if (found) {
+        currentPlayer = found;
+        found.session_token = sessionToken;
+        saveData(data);
+      }
+    }
+
+    // If no player matched, return null to return to WelcomeScreen instead of hijacking banker
+    if (!currentPlayer) {
+      return null;
+    }
 
     // Compute player debt totals
     const populatedPlayers = players.map(p => {

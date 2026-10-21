@@ -97,6 +97,7 @@ export const App: React.FC = () => {
       } else {
         // Room not found or invalid
         localStorage.removeItem(CURRENT_ROOM_KEY);
+        localStorage.removeItem('monopoly_active_player_id');
         setRoomId(null);
         setRoomState(null);
       }
@@ -171,6 +172,7 @@ export const App: React.FC = () => {
   const handleCreateRoom = async (playerName: string) => {
     const { room, player } = await dataService.createRoom(playerName);
     localStorage.setItem(CURRENT_ROOM_KEY, room.id);
+    localStorage.setItem('monopoly_active_player_id', player.id);
     setRoomId(room.id);
     addToast(`Oda oluşturuldu: ${room.code}`, 'success');
     await refreshRoomState();
@@ -178,8 +180,9 @@ export const App: React.FC = () => {
 
   // Room joining
   const handleJoinRoom = async (roomCode: string, playerName: string) => {
-    const { room } = await dataService.joinRoom(roomCode, playerName);
+    const { room, player } = await dataService.joinRoom(roomCode, playerName);
     localStorage.setItem(CURRENT_ROOM_KEY, room.id);
+    localStorage.setItem('monopoly_active_player_id', player.id);
     setRoomId(room.id);
     addToast(`${room.code} odasına katıldınız!`, 'success');
     await refreshRoomState();
@@ -189,6 +192,7 @@ export const App: React.FC = () => {
   const handleReconnectWithPin = async (roomCode: string, pin: string) => {
     const { room, player } = await dataService.reconnectWithPin(roomCode, pin);
     localStorage.setItem(CURRENT_ROOM_KEY, room.id);
+    localStorage.setItem('monopoly_active_player_id', player.id);
     setRoomId(room.id);
     addToast(`Hoş geldin ${player.name}! Varlıklarınla geri bağlandın.`, 'success');
     await refreshRoomState();
@@ -207,6 +211,7 @@ export const App: React.FC = () => {
         }
       }
       localStorage.removeItem(CURRENT_ROOM_KEY);
+      localStorage.removeItem('monopoly_active_player_id');
       setRoomId(null);
       setRoomState(null);
       addToast('Odadan ayrıldınız.', 'info');

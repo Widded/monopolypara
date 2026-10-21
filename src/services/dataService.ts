@@ -45,13 +45,19 @@ export const dataService = {
       throw new Error('Supabase veritabanı bağlantısı bulunamadı.');
     }
 
+    const cleanDigits = roomCode.replace(/\D/g, '');
+    const normalizedCode = cleanDigits ? `WID-${cleanDigits}` : roomCode.trim().toUpperCase();
+
     const { data, error } = await supabase.rpc('join_room_player', {
-      p_room_code: roomCode.trim().toUpperCase(),
+      p_room_code: normalizedCode,
       p_player_name: playerName.trim(),
       p_session_token: sessionToken,
     });
 
     if (error) {
+      if (error.message && (error.message.includes('aynı isimde') || error.message.includes('zaten var'))) {
+        throw new Error(`Masada "${playerName.trim()}" isminde bir oyuncu zaten var. Eğer bu sizseniz "Geri Dön (PIN)" sekmesinden PIN kodunuzla bağlanabilirsiniz.`);
+      }
       throw new Error(error.message || 'Odaya katılınamadı.');
     }
 
@@ -68,49 +74,72 @@ export const dataService = {
       throw new Error('Supabase veritabanı bağlantısı bulunamadı.');
     }
 
-    // Kullanıcı oturumdaysa başkası giremesin kontrolü
-    try {
-      const { data: targetPlayer } = await supabase
-        .from('players')
-        .select('id, name, is_online, session_token')
-        .eq('recovery_pin', pin.trim())
-        .maybeSingle();
+    const cleanPin = pin.trim().replace(/\D/g, '').padStart(4, '0');
+    const cleanDigits = roomCode.replace(/\D/g, '');
+    const normalizedCode = cleanDigits ? `WID-${cleanDigits}` : roomCode.trim().toUpperCase();
 
-      if (
-        targetPlayer &&
-        targetPlayer.is_online === true &&
-        targetPlayer.session_token &&
-        targetPlayer.session_token !== sessionToken
-      ) {
-        throw new Error(
-          `'${targetPlayer.name}' şu anda oyunda aktif! Masadan çıkış yapmadan başka cihazdan bu PIN ile giriş yapılamaz.`
-        );
-      }
-    } catch (err: any) {
-      if (err.message && err.message.includes('aktif')) {
-        throw err;
-      }
-    }
-
+    // 1. RPC çağrısı dene
     const { data, error } = await supabase.rpc('reconnect_player_with_pin', {
-      p_room_code: roomCode.trim().toUpperCase(),
-      p_pin: pin.trim(),
+      p_room_code: normalizedCode,
+      p_pin: cleanPin,
       p_session_token: sessionToken,
     });
 
-    if (error) {
-      throw new Error(error.message || 'Kurtarma kodu ile geri bağlanılamadı.');
+    if (!error && data?.room && data?.player) {
+      return {
+        room: data.room,
+        player: data.player,
+      };
     }
 
-    // Masaya tekrar bağlandığı için is_online = true yap
+    // 2. İstemci tarafı doğrudan kurtarma yedeği (RPC henüz güncellenmemişse veya is_online hatası veriyorsa)
     try {
-      await supabase.from('players').update({ is_online: true }).eq('id', data.player.id);
-    } catch {}
+      let roomQuery = supabase.from('rooms').select('*');
+      if (cleanDigits) {
+        roomQuery = roomQuery.or(`code.eq.WID-${cleanDigits},code.eq.${cleanDigits},code.eq.${roomCode.trim().toUpperCase()}`);
+      } else {
+        roomQuery = roomQuery.eq('code', roomCode.trim().toUpperCase());
+      }
+      const { data: roomData, error: roomErr } = await roomQuery.maybeSingle();
 
-    return {
-      room: data.room,
-      player: data.player,
-    };
+      if (roomErr || !roomData) {
+        throw new Error('Oda bulunamadı. Lütfen oda kodunu kontrol edin.');
+      }
+
+      // Oyuncuyu PIN ile bul (hem 4 haneli LPAD hem de ham PIN ile kontrol et)
+      const { data: matchedPlayers, error: playerErr } = await supabase
+        .from('players')
+        .select('*')
+        .eq('room_id', roomData.id)
+        .or(`recovery_pin.eq.${cleanPin},recovery_pin.eq.${pin.trim()}`);
+
+      const matchedPlayer = matchedPlayers?.[0];
+
+      if (playerErr || !matchedPlayer) {
+        throw new Error(`Bu odada (${cleanPin}) PIN koduna sahip oyuncu bulunamadı. Lütfen odadaki arkadaşlarınıza kartınızdaki PIN kodunu sorun.`);
+      }
+
+      // Session token'ı bu oyuncuyla senkronize et ve online yap
+      await supabase
+        .from('players')
+        .update({
+          session_token: sessionToken,
+          is_online: true,
+          last_active_at: new Date().toISOString(),
+        })
+        .eq('id', matchedPlayer.id);
+
+      return {
+        room: roomData,
+        player: {
+          ...matchedPlayer,
+          session_token: sessionToken,
+          is_online: true,
+        },
+      };
+    } catch (fallbackErr: any) {
+      throw new Error(fallbackErr.message || error?.message || 'Kurtarma kodu ile geri bağlanılamadı.');
+    }
   },
 
   async leaveRoom(roomId?: string, playerId?: string): Promise<void> {
@@ -207,7 +236,28 @@ export const dataService = {
         to_player_name: t.to_player_id ? (playersList.find(p => p.id === t.to_player_id)?.name || 'Oyuncu') : 'Banka',
       }));
 
-      const currentPlayer = populatedPlayers.find(p => p.session_token === sessionToken) || populatedPlayers[0];
+      const activePlayerId = typeof window !== 'undefined' ? localStorage.getItem('monopoly_active_player_id') : null;
+
+      // 1. Session token ile doğrudan eşleşen oyuncu
+      let currentPlayer = populatedPlayers.find(p => p.session_token === sessionToken);
+
+      // 2. Eğer session token doğrudan eşleşmedi ama kayıtlı playerId varsa ve odadaysa
+      if (!currentPlayer && activePlayerId) {
+        const found = populatedPlayers.find(p => p.id === activePlayerId);
+        if (found) {
+          currentPlayer = found;
+          // Oturum anahtarını bu oyuncuyla senkronize et
+          try {
+            supabase.from('players').update({ session_token: sessionToken, is_online: true }).eq('id', found.id);
+          } catch {}
+        }
+      }
+
+      // CRITICAL: Eğer bu cihazdaki kullanıcı bu odada geçerli bir oyuncu değilse,
+      // ASLA bankacının (veya 0. oyuncunun) yerine sokma! null döndür ki login ekranına dönsün.
+      if (!currentPlayer) {
+        return null;
+      }
 
       return {
         room,
