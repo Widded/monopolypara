@@ -3,7 +3,9 @@ export type TransactionType =
   | 'debt_lend' 
   | 'debt_payment' 
   | 'debt_settlement' 
-  | 'banker_adjust';
+  | 'banker_adjust'
+  | 'bank_payment'
+  | 'bankruptcy';
 
 export type DebtStatus = 'pending' | 'rejected' | 'active' | 'partially_paid' | 'settled';
 
@@ -24,6 +26,7 @@ export interface Player {
   session_token: string;
   recovery_pin?: string; // 4 haneli geri bağlanma kodu
   is_online?: boolean;   // Oyuncu şu anda masada mı yoksa çıkış mı yaptı
+  is_bankrupt?: boolean; // Oyuncu iflas etti mi
   created_at: string;
   // Computed client-side fields
   total_receivable?: number; // Verdiği açık borçlar toplamı (alacak)

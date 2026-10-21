@@ -104,6 +104,13 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
                 <span>Bankacı</span>
               </span>
             )}
+
+            {/* İflas Rozeti */}
+            {player.is_bankrupt && (
+              <span className="text-[10px] font-bold text-red-400 bg-red-500/20 border border-red-500/30 px-1.5 py-0.2 rounded-md tracking-wider shrink-0">
+                İFLAS
+              </span>
+            )}
           </div>
 
           {/* Borç & Alacak Detayları: "Borcu var: x Alacağı var: x" */}
@@ -132,7 +139,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
         <div className="text-right">
           <div
             className={`font-money font-extrabold text-[19px] sm:text-[20px] tracking-tight tabular-nums transition-colors duration-200 ${
-              balanceChange === 'up'
+              player.is_bankrupt
+                ? 'text-text-muted line-through'
+                : balanceChange === 'up'
                 ? 'text-emerald-400'
                 : balanceChange === 'down'
                 ? 'text-rose-400'
@@ -143,7 +152,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
           </div>
         </div>
 
-        {!isCurrentPlayer && (
+        {!isCurrentPlayer && !player.is_bankrupt && (
           <button
             type="button"
             onClick={(e) => {
@@ -153,7 +162,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
             className="flex items-center gap-1 text-xs font-bold text-emerald-400 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 px-2.5 py-1.5 rounded-xl transition-all active:scale-95 cursor-pointer shrink-0"
             title={`${safePlayerName} adlı oyuncuya para gönder`}
           >
-            <Send className="w-3 h-3 stroke-[2.2]" />
+            <Send className="w-3.5 h-3.5 stroke-[2.2]" />
             <span>Gönder</span>
           </button>
         )}

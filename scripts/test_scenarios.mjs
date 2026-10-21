@@ -150,6 +150,36 @@ const mock = {
     const txId = 'tx_' + Math.random().toString(36).substring(2, 7);
     data.transactions[txId] = { id: txId, room_id: roomId, type: 'debt_lend', from_player_id: debt.creditor_id, to_player_id: debt.debtor_id, amount: debt.initial_amount, description: debt.description || 'Borç onaylandı', created_at: new Date().toISOString() };
     saveData(data);
+  },
+
+  payToBank(roomId, playerId, amount, desc) {
+    if (amount <= 0) throw new Error('Tutar pozitif olmalı');
+    const data = loadData();
+    const player = data.players[playerId];
+    if (player.balance < amount) throw new Error('Yetersiz bakiye');
+    player.balance -= amount;
+    const txId = 'tx_' + Math.random().toString(36).substring(2, 7);
+    data.transactions[txId] = { id: txId, room_id: roomId, type: 'bank_payment', from_player_id: playerId, to_player_id: null, amount, description: desc || 'Bankaya Ödeme', created_at: new Date().toISOString() };
+    saveData(data);
+  },
+
+  declareBankruptcy(roomId, playerId) {
+    const data = loadData();
+    const player = data.players[playerId];
+    if (player.is_bankrupt) throw new Error('Zaten iflas etmiş');
+    player.balance = 0;
+    player.is_bankrupt = true;
+    player.is_online = false;
+    // Debts cleanup
+    Object.values(data.debts).forEach(d => {
+      if (d.debtor_id === playerId || d.creditor_id === playerId) {
+        d.status = 'settled';
+        d.remaining_amount = 0;
+      }
+    });
+    const txId = 'tx_' + Math.random().toString(36).substring(2, 7);
+    data.transactions[txId] = { id: txId, room_id: roomId, type: 'bankruptcy', from_player_id: playerId, to_player_id: null, amount: 0, description: player.name + ' iflas etti', created_at: new Date().toISOString() };
+    saveData(data);
   }
 };
 
@@ -266,4 +296,26 @@ assert.strictEqual(loadData().players[mehmet.id].balance, beforeProposalMehmet +
 assert.strictEqual(loadData().debts[propDebtId].status, 'active', 'Borç durumu active olmalı');
 console.log('✓ Senaryo 13: Borç teklifi borçlu onaylamadan gitmedi; borçlu onaylayınca para ve borç başarıyla işlendi!');
 
-console.log('\n--- TÜM TEST SENARYOLARI (1-13) BAŞARIYLA GEÇTİ! ---');
+// Senaryo 14: Bankaya Ödeme (Tapu alımı / Vergi / Hapishane)
+const beforeBankPay = loadData().players[ahmet.id].balance;
+mock.payToBank(room.id, ahmet.id, 50, 'Hapisten Çıkış Harcı');
+assert.strictEqual(loadData().players[ahmet.id].balance, beforeBankPay - 50, 'Bankaya 50 ₺ ödenince oyuncunun bakiyesi 50 ₺ düşmeli');
+const bankTx = Object.values(loadData().transactions).find(t => t.type === 'bank_payment');
+assert.ok(bankTx, 'Bankaya ödeme işlemi geçmişe kaydedilmeli');
+assert.strictEqual(bankTx.to_player_id, null, 'Bankaya ödemelerde hedef oyuncu null (Banka Kasası) olmalı');
+console.log('✓ Senaryo 14: Bankaya 50 ₺ ödeme yapıldı, bakiye düştü ve işlem Banka Kasası olarak kaydedildi.');
+
+// Senaryo 15: İflas Bildirme ve Tasfiye
+mock.declareBankruptcy(room.id, mehmet.id);
+const bankruptMehmet = loadData().players[mehmet.id];
+assert.strictEqual(bankruptMehmet.balance, 0, 'İflas eden oyuncunun bakiyesi sıfırlanmalı');
+assert.strictEqual(bankruptMehmet.is_bankrupt, true, 'is_bankrupt true olmalı');
+assert.strictEqual(bankruptMehmet.is_online, false, 'is_online false olmalı');
+const mehmetDebts = Object.values(loadData().debts).filter(d => d.debtor_id === mehmet.id || d.creditor_id === mehmet.id);
+mehmetDebts.forEach(d => {
+  assert.strictEqual(d.status, 'settled', 'İflas eden oyuncunun borçları kapatılmış olmalı');
+  assert.strictEqual(d.remaining_amount, 0, 'Kalan borç 0 olmalı');
+});
+console.log('✓ Senaryo 15: Mehmet iflas bildirdi; nakit sıfırlandı, tüm borçları kapatıldı, oyundan elendi.');
+
+console.log('\n--- TÜM TEST SENARYOLARI (1-15) EKSİKSİZ VE BAŞARIYLA GEÇTİ! ---');

@@ -196,6 +196,34 @@ export const App: React.FC = () => {
   const handleTransfer = async (fromId: string, toId: string, amount: number, description?: string) => {
     if (!roomId) return;
 
+    if (toId === 'bank') {
+      // 1. Anında 0ms yerel arayüz güncellemesi (Bankaya Ödeme)
+      setRoomState(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          players: prev.players.map(p => {
+            if (p.id === fromId) return { ...p, balance: p.balance - amount };
+            return p;
+          }),
+          currentPlayer: prev.currentPlayer?.id === fromId
+            ? { ...prev.currentPlayer, balance: prev.currentPlayer.balance - amount }
+            : prev.currentPlayer,
+        };
+      });
+      triggerConfetti();
+      addToast('Bankaya ödeme başarıyla yapıldı.', 'success');
+
+      try {
+        await dataService.payToBank(roomId, amount, description);
+        await refreshRoomState();
+      } catch (err: any) {
+        addToast(err.message || 'Bankaya ödeme başarısız.', 'error');
+        await refreshRoomState();
+      }
+      return;
+    }
+
     // 1. Anında 0ms yerel arayüz güncellemesi
     setRoomState(prev => {
       if (!prev) return prev;
@@ -382,6 +410,18 @@ export const App: React.FC = () => {
     }
   };
 
+  // Declare Bankruptcy
+  const handleDeclareBankruptcy = async () => {
+    if (!roomId) return;
+    try {
+      await dataService.declareBankruptcy(roomId);
+      addToast('İflas bildirdiniz. Masadan çekildiniz.', 'info');
+      await refreshRoomState();
+    } catch (err: any) {
+      addToast(err.message || 'İflas işlemi başarısız.', 'error');
+    }
+  };
+
   // Shortcut triggers from PlayerCard or PlayerDetail
   const handleQuickSendMoney = (targetPlayer: Player) => {
     setPreSelectedReceiver(targetPlayer);
@@ -559,6 +599,7 @@ export const App: React.FC = () => {
         onOpenLend={handleQuickLend}
         onOpenPayDebt={handleQuickPayDebt}
         onOpenDebtDetail={(d) => setDetailDebt(d)}
+        onDeclareBankruptcy={handleDeclareBankruptcy}
       />
 
       <BankerPanelModal

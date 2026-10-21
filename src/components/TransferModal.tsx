@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Send, AlertTriangle, Loader2 } from 'lucide-react';
+import { X, Send, AlertTriangle, Loader2, Landmark } from 'lucide-react';
 import { Player } from '../types';
 import { formatMoney } from '../utils/formatters';
 import { Keypad } from './Keypad';
@@ -23,11 +23,15 @@ export const TransferModal: React.FC<TransferModalProps> = ({
 }) => {
   const [receiverId, setReceiverId] = useState<string>('');
   const [amountStr, setAmountStr] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const prevIsOpenRef = useRef<boolean>(false);
 
-  const potentialReceivers = players.filter(p => p.id !== currentPlayer.id);
+  // Sadece masada aktif olan ve iflas etmemiş diğer oyuncular
+  const potentialReceivers = players.filter(
+    p => p.id !== currentPlayer.id && p.is_online !== false && !p.is_bankrupt
+  );
 
   // Sadece modal İLK AÇILDIĞINDA sıfırla, arka plan güncellemelerinde kullanıcının yazdığı silinmesin
   useEffect(() => {
@@ -36,8 +40,11 @@ export const TransferModal: React.FC<TransferModalProps> = ({
         setReceiverId(preSelectedReceiver.id);
       } else if (potentialReceivers.length > 0) {
         setReceiverId(potentialReceivers[0].id);
+      } else {
+        setReceiverId('bank');
       }
       setAmountStr('');
+      setDescription('');
       setError(null);
     }
     prevIsOpenRef.current = isOpen;
@@ -45,8 +52,9 @@ export const TransferModal: React.FC<TransferModalProps> = ({
 
   if (!isOpen) return null;
 
+  const isBank = receiverId === 'bank';
   const amount = parseFloat(amountStr) || 0;
-  const receiver = players.find(p => p.id === receiverId);
+  const receiver = isBank ? null : players.find(p => p.id === receiverId);
 
   const handleExecute = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,7 +74,7 @@ export const TransferModal: React.FC<TransferModalProps> = ({
     }
 
     onClose();
-    onTransfer(currentPlayer.id, receiverId, amount);
+    onTransfer(currentPlayer.id, receiverId, amount, description || (isBank ? 'Bankaya Ödeme' : undefined));
   };
 
   return (
@@ -76,12 +84,14 @@ export const TransferModal: React.FC<TransferModalProps> = ({
         <div className="flex items-center justify-between pb-2.5 border-b border-border-subtle mb-3">
           <div className="flex items-center gap-2">
             <Send className="w-4 h-4 text-accent" />
-            <h3 className="font-bold text-sm text-text-main">Para Gönder</h3>
+            <h3 className="font-bold text-sm text-text-main">
+              {isBank ? 'Bankaya Öde (Tapu / Vergi / Ceza)' : 'Para Gönder'}
+            </h3>
           </div>
           <button
             onClick={onClose}
             disabled={loading}
-            className="text-text-muted hover:text-text-main p-1 rounded-lg"
+            className="text-text-muted hover:text-text-main p-1 rounded-lg cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -97,30 +107,102 @@ export const TransferModal: React.FC<TransferModalProps> = ({
         <form onSubmit={handleExecute} className="space-y-3">
           {/* Receiver Selection */}
           <div>
-            <div className="text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-1">
-              Alıcı Oyuncu
+            <div className="text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-1.5 flex items-center justify-between">
+              <span>Alıcı Seçimi</span>
+              {isBank && <span className="text-[10px] text-amber-400 font-bold">🏛️ Banka Kasası</span>}
             </div>
-            {potentialReceivers.length === 0 ? (
-              <div className="text-xs text-text-muted py-2 text-center bg-bg-surface rounded-lg border border-border-subtle">
-                Odada başka oyuncu yok.
+
+            {/* Banka Butonu */}
+            <button
+              type="button"
+              onClick={() => {
+                setReceiverId('bank');
+                setError(null);
+              }}
+              className={`w-full mb-2 p-2 rounded-xl border text-left text-xs transition-all flex items-center justify-between cursor-pointer ${
+                isBank
+                  ? 'border-amber-400 bg-amber-500/15 text-amber-200 font-bold shadow-sm'
+                  : 'border-white/[0.08] bg-bg-surface text-text-muted hover:text-white hover:border-white/[0.16]'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                  <Landmark className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <div className="font-bold">🏛️ Banka Kasası</div>
+                  <div className="text-[10px] text-text-subtle font-normal">Tapu alımı, vergi, ceza ödemesi</div>
+                </div>
               </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-1.5">
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${isBank ? 'bg-amber-400 text-black border-amber-400' : 'bg-white/[0.04] text-text-subtle border-white/[0.08]'}`}>
+                {isBank ? 'Seçildi' : 'Seç'}
+              </span>
+            </button>
+
+            {/* Banka Hızlı Ödeme Çipleri */}
+            {isBank && (
+              <div className="grid grid-cols-2 gap-1.5 mb-2.5 p-2 rounded-xl bg-amber-500/[0.06] border border-amber-500/20 text-[11px]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAmountStr('50');
+                    setDescription('Hapis Cezası');
+                  }}
+                  className="py-1 px-2 rounded-lg bg-bg-card border border-white/[0.06] hover:border-amber-400/50 text-left font-medium text-text-muted hover:text-white"
+                >
+                  🔒 Hapis: <strong className="text-amber-300 font-money">50 ₺</strong>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAmountStr('200');
+                    setDescription('Gelir Vergisi');
+                  }}
+                  className="py-1 px-2 rounded-lg bg-bg-card border border-white/[0.06] hover:border-amber-400/50 text-left font-medium text-text-muted hover:text-white"
+                >
+                  📋 Gelir Vergisi: <strong className="text-amber-300 font-money">200 ₺</strong>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAmountStr('100');
+                    setDescription('Lüks Vergisi');
+                  }}
+                  className="py-1 px-2 rounded-lg bg-bg-card border border-white/[0.06] hover:border-amber-400/50 text-left font-medium text-text-muted hover:text-white"
+                >
+                  💎 Lüks Vergisi: <strong className="text-amber-300 font-money">100 ₺</strong>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDescription('Tapu Satın Alımı');
+                  }}
+                  className="py-1 px-2 rounded-lg bg-bg-card border border-white/[0.06] hover:border-amber-400/50 text-left font-medium text-text-muted hover:text-white truncate"
+                >
+                  🏠 Tapu Satın Alımı
+                </button>
+              </div>
+            )}
+
+            {/* Oyuncular */}
+            {potentialReceivers.length > 0 && (
+              <div className="grid grid-cols-2 gap-1.5 max-h-24 overflow-y-auto pr-0.5">
                 {potentialReceivers.map(p => (
                   <button
                     key={p.id}
                     type="button"
                     onClick={() => {
                       setReceiverId(p.id);
+                      setDescription('');
                       setError(null);
                     }}
-                    className={`py-1.5 px-2.5 rounded-lg border text-left text-xs transition-all ${
+                    className={`py-1.5 px-2.5 rounded-lg border text-left text-xs transition-all cursor-pointer ${
                       receiverId === p.id
                         ? 'border-accent bg-accent/15 text-text-main font-semibold'
                         : 'border-border-subtle bg-bg-surface text-text-muted hover:text-text-main'
                     }`}
                   >
-                    <div className="truncate">{p.name}</div>
+                    <div className="truncate font-medium">{p.name}</div>
                     <div className="text-[10px] font-money opacity-80">{formatMoney(p.balance)}</div>
                   </button>
                 ))}
@@ -128,7 +210,7 @@ export const TransferModal: React.FC<TransferModalProps> = ({
             )}
           </div>
 
-          {/* Amount Display (No native keyboard!) */}
+          {/* Amount Display */}
           <div className="bg-bg-surface border border-border-subtle rounded-xl p-2.5 flex items-center justify-between">
             <span className="text-[11px] text-text-muted font-medium">Tutar</span>
             <span className="text-2xl font-money font-bold text-accent tracking-tight">
@@ -151,10 +233,12 @@ export const TransferModal: React.FC<TransferModalProps> = ({
           <button
             type="submit"
             disabled={loading || !receiverId || amount <= 0}
-            className="btn-primary w-full py-3 text-xs font-bold mt-1"
+            className="btn-primary w-full py-3 text-xs font-bold mt-1 cursor-pointer"
           >
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
+            ) : isBank ? (
+              <span>Bankaya {formatMoney(amount)} Öde</span>
             ) : (
               <span>
                 {receiver ? `${receiver.name}'e ${formatMoney(amount)} Gönder` : 'Gönder'}

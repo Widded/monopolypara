@@ -186,6 +186,7 @@ export const dataService = {
           // Kullanıcı isteği: PIN herkese görünür olsun
           recovery_pin: p.recovery_pin,
           is_online: p.is_online !== false,
+          is_bankrupt: p.is_bankrupt === true,
           session_token: isCurrent ? p.session_token : '',
         };
       });
@@ -445,5 +446,41 @@ export const dataService = {
       payments: payments || [],
       settlement: settlements && settlements.length > 0 ? settlements[0] : null,
     };
+  },
+
+  async payToBank(roomId: string, amount: number, description?: string): Promise<void> {
+    const sessionToken = getOrCreateSessionToken();
+    if (!isSupabaseConfigured() || !supabase) {
+      mockStorage.payToBank(roomId, sessionToken, amount, description);
+      return;
+    }
+
+    const { error } = await supabase.rpc('pay_to_bank', {
+      p_room_id: roomId,
+      p_session_token: sessionToken,
+      p_amount: amount,
+      p_description: description || 'Bankaya Ödeme',
+    });
+
+    if (error) {
+      throw new Error(error.message || 'Bankaya ödeme yapılamadı.');
+    }
+  },
+
+  async declareBankruptcy(roomId: string): Promise<void> {
+    const sessionToken = getOrCreateSessionToken();
+    if (!isSupabaseConfigured() || !supabase) {
+      mockStorage.declareBankruptcy(roomId, sessionToken);
+      return;
+    }
+
+    const { error } = await supabase.rpc('declare_bankruptcy', {
+      p_room_id: roomId,
+      p_session_token: sessionToken,
+    });
+
+    if (error) {
+      throw new Error(error.message || 'İflas işlemi gerçekleştirilemedi.');
+    }
   }
 };

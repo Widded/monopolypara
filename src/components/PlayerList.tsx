@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, UserPlus, User } from 'lucide-react';
+import { Users, UserPlus, User, Skull } from 'lucide-react';
 import { Player } from '../types';
 import { PlayerCard } from './PlayerCard';
 
@@ -18,14 +18,17 @@ export const PlayerList: React.FC<PlayerListProps> = ({
   onSelectPlayer,
   onCopyRoomCode,
 }) => {
-  // Masada aktif olan oyuncular
-  const activePlayers = players.filter(p => p.is_online !== false);
+  // Masada aktif ve iflas etmemiş olan oyuncular
+  const activePlayers = players.filter(p => p.is_online !== false && !p.is_bankrupt);
 
-  // Masadan çıkış yapmış olanlar
-  const offlinePlayers = players.filter(p => p.is_online === false && p.id !== currentPlayer?.id);
+  // Masadan çıkış yapmış olanlar (iflas etmeyenler)
+  const offlinePlayers = players.filter(p => p.is_online === false && !p.is_bankrupt && p.id !== currentPlayer?.id);
+
+  // İflas eden oyuncular
+  const bankruptPlayers = players.filter(p => p.is_bankrupt === true);
 
   // Kullanıcının kendisi (Ben / Sen)
-  const me = activePlayers.find(p => p.id === currentPlayer?.id) || currentPlayer;
+  const me = players.find(p => p.id === currentPlayer?.id) || currentPlayer;
 
   // Diğer aktif oyuncular (Alfabetik)
   const otherPlayers = activePlayers
@@ -38,9 +41,18 @@ export const PlayerList: React.FC<PlayerListProps> = ({
       {me && (
         <div className="space-y-1.5">
           <div className="flex items-center justify-between px-1 text-xs">
-            <div className="flex items-center gap-1.5 text-emerald-400 font-bold text-[10px] uppercase tracking-wider">
-              <User className="w-3 h-3 text-emerald-400" />
-              <span>Senin Durumun</span>
+            <div className={`flex items-center gap-1.5 font-bold text-[10px] uppercase tracking-wider ${me.is_bankrupt ? 'text-red-400' : 'text-emerald-400'}`}>
+              {me.is_bankrupt ? (
+                <>
+                  <Skull className="w-3 h-3 text-red-400" />
+                  <span>İflas Durumun</span>
+                </>
+              ) : (
+                <>
+                  <User className="w-3 h-3 text-emerald-400" />
+                  <span>Senin Durumun</span>
+                </>
+              )}
             </div>
             <span className="text-[10px] text-text-subtle font-medium">
               Detay için dokun
@@ -141,6 +153,48 @@ export const PlayerList: React.FC<PlayerListProps> = ({
                   <span className="font-bold text-accent tracking-wider bg-bg-card border border-white/[0.08] px-2 py-0.5 rounded-md">
                     {p.recovery_pin || '----'}
                   </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 5. İFLAS EDEN OYUNCULAR */}
+      {bankruptPlayers.length > 0 && (
+        <div className="pt-3 border-t border-white/[0.06] space-y-2">
+          <div className="flex items-center justify-between px-1 text-xs">
+            <span className="text-[10px] font-bold text-red-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Skull className="w-3 h-3 text-red-400" />
+              <span>İflas Edenler ({bankruptPlayers.length})</span>
+            </span>
+            <span className="text-[10px] text-text-subtle">
+              Oyundan elendi
+            </span>
+          </div>
+
+          <div className="space-y-1.5">
+            {bankruptPlayers.map(p => (
+              <div
+                key={p.id}
+                onClick={() => onSelectPlayer(p)}
+                className="p-2.5 rounded-xl bg-red-950/15 border border-red-500/20 hover:border-red-500/40 flex items-center justify-between text-xs cursor-pointer transition-all group"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-text-muted line-through group-hover:text-red-300 transition-colors">
+                    {p.name}
+                  </span>
+                  {p.id === currentPlayer?.id && (
+                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-red-500/20 text-red-400 font-bold">
+                      Sen
+                    </span>
+                  )}
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20 font-bold">
+                    İFLAS
+                  </span>
+                </div>
+                <div className="text-[11px] font-money text-text-subtle">
+                  0 ₺
                 </div>
               </div>
             ))}

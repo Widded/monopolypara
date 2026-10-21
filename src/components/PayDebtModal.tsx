@@ -32,16 +32,21 @@ export const PayDebtModal: React.FC<PayDebtModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const prevIsOpenRef = useRef<boolean>(false);
 
-  const activeDebts = debts.filter(d => (d.status === 'active' || d.status === 'partially_paid') && d.remaining_amount > 0);
+  // Sadece bu oyuncunun borçlu olduğu veya alacaklı olduğu borçları göster (Başkalarının borcunu ödeyemez!)
+  const myDebts = debts.filter(
+    d => (d.status === 'active' || d.status === 'partially_paid') &&
+         d.remaining_amount > 0 &&
+         (d.debtor_id === currentPlayer.id || d.creditor_id === currentPlayer.id)
+  );
 
   // Sadece modal İLK AÇILDIĞINDA sıfırla, arka plan güncellemelerinde kullanıcının yazdığı silinmesin
   useEffect(() => {
     if (isOpen && !prevIsOpenRef.current) {
       if (preSelectedDebtId) {
         setSelectedDebtId(preSelectedDebtId);
-      } else if (activeDebts.length > 0) {
-        const myDebt = activeDebts.find(d => d.debtor_id === currentPlayer.id);
-        setSelectedDebtId(myDebt ? myDebt.id : activeDebts[0].id);
+      } else if (myDebts.length > 0) {
+        const myPayableDebt = myDebts.find(d => d.debtor_id === currentPlayer.id);
+        setSelectedDebtId(myPayableDebt ? myPayableDebt.id : myDebts[0].id);
       } else {
         setSelectedDebtId('');
       }
@@ -54,7 +59,9 @@ export const PayDebtModal: React.FC<PayDebtModalProps> = ({
 
   if (!isOpen) return null;
 
-  const currentDebt = activeDebts.find(d => d.id === selectedDebtId);
+  const currentDebt = myDebts.find(d => d.id === selectedDebtId);
+  const isDebtor = currentDebt?.debtor_id === currentPlayer.id;
+  const isCreditor = currentDebt?.creditor_id === currentPlayer.id;
   const debtor = currentDebt ? players.find(p => p.id === currentDebt.debtor_id) : null;
   const creditor = currentDebt ? players.find(p => p.id === currentDebt.creditor_id) : null;
 
@@ -82,6 +89,13 @@ export const PayDebtModal: React.FC<PayDebtModalProps> = ({
       setError('Lütfen bir borç seçin.');
       return;
     }
+
+    // GÜVENLİK KONTROLÜ: Başkasının borcu başkasının cüzdanından ödenemez!
+    if (!isSettlement && !isDebtor) {
+      setError('Yalnızca kendi borçlarınızı ödeyebilirsiniz. Başkasına ait bir borcu ödeyemezsiniz.');
+      return;
+    }
+
     if (amount <= 0 && !isSettlement) {
       setError('Lütfen bir ödeme tutarı girin.');
       return;
@@ -91,7 +105,7 @@ export const PayDebtModal: React.FC<PayDebtModalProps> = ({
       return;
     }
     if (debtor.balance < amount) {
-      setError(`Borçlunun bakiyesi yetersiz! (${formatMoney(debtor.balance)})`);
+      setError(`Yetersiz bakiye! Mevcut nakit: ${formatMoney(debtor.balance)}`);
       return;
     }
 
@@ -128,42 +142,54 @@ export const PayDebtModal: React.FC<PayDebtModalProps> = ({
           </div>
         )}
 
-        {activeDebts.length === 0 ? (
+        {myDebts.length === 0 ? (
           <div className="py-6 text-center text-xs text-text-muted">
-            Şu anda açık bir borç kaydı yok.
+            Şu anda size ait açık bir borç veya alacak bulunmuyor.
           </div>
         ) : (
           <form onSubmit={handleExecute} className="space-y-2.5">
             {/* Debt Picker */}
             <div>
               <div className="text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-1">
-                Açık Borç
+                İlgili Borç / Alacak Kaydı
               </div>
-              <div className="space-y-1 max-h-24 overflow-y-auto pr-0.5">
-                {activeDebts.map(d => (
-                  <button
-                    key={d.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedDebtId(d.id);
-                      setAmountStr('');
-                      setError(null);
-                    }}
-                    className={`w-full p-2 rounded-lg border text-left text-xs transition-all flex items-center justify-between ${
-                      selectedDebtId === d.id
-                        ? 'border-accent bg-accent/15 text-text-main font-semibold'
-                        : 'border-border-subtle bg-bg-surface text-text-muted hover:text-text-main'
-                    }`}
-                  >
-                    <div className="truncate">
-                      <span>{d.debtor_name}</span>
-                      <span className="text-text-muted font-normal"> → {d.creditor_name}</span>
-                    </div>
-                    <span className="font-money text-accent shrink-0 ml-2">
-                      {formatMoney(d.remaining_amount)}
-                    </span>
-                  </button>
-                ))}
+              <div className="space-y-1.5 max-h-32 overflow-y-auto pr-0.5">
+                {myDebts.map(d => {
+                  const isOwing = d.debtor_id === currentPlayer.id;
+                  return (
+                    <button
+                      key={d.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedDebtId(d.id);
+                        setAmountStr('');
+                        setIsSettlement(!isOwing); // Alacaklıysa doğrudan anlaşmalı kapatma
+                        setError(null);
+                      }}
+                      className={`w-full p-2.5 rounded-xl border text-left text-xs transition-all flex items-center justify-between cursor-pointer ${
+                        selectedDebtId === d.id
+                          ? 'border-accent bg-accent/15 text-text-main font-semibold'
+                          : 'border-border-subtle bg-bg-surface text-text-muted hover:text-text-main'
+                      }`}
+                    >
+                      <div className="truncate flex items-center gap-1.5">
+                        <span
+                          className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider ${
+                            isOwing
+                              ? 'bg-money-neg/15 text-money-neg border border-money-neg/30'
+                              : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                          }`}
+                        >
+                          {isOwing ? 'Borcunuz' : 'Alacağınız'}
+                        </span>
+                        <span className="font-semibold">{isOwing ? d.creditor_name : d.debtor_name}</span>
+                      </div>
+                      <span className="font-money text-accent font-bold shrink-0 ml-2">
+                        {formatMoney(d.remaining_amount)}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 

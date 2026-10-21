@@ -465,5 +465,76 @@ export const mockStorage = {
       payments,
       settlement,
     };
+  },
+
+  payToBank(roomId: string, sessionToken: string, amount: number, description?: string) {
+    if (amount <= 0) throw new Error('Ödeme tutarı pozitif olmalıdır.');
+    const data = loadData();
+    const player = Object.values(data.players).find(p => p.room_id === roomId && p.session_token === sessionToken);
+    if (!player) throw new Error('Oyuncu bulunamadı.');
+    if (player.balance < amount) {
+      throw new Error(`Yetersiz bakiye! (Mevcut: ${player.balance} ₺, Gereken: ${amount} ₺)`);
+    }
+    player.balance -= amount;
+    const txId = 'tx_' + Math.random().toString(36).substring(2, 9);
+    data.transactions[txId] = {
+      id: txId,
+      room_id: roomId,
+      type: 'bank_payment',
+      from_player_id: player.id,
+      to_player_id: null,
+      amount,
+      description: description || 'Bankaya Ödeme',
+      created_at: new Date().toISOString(),
+    };
+    saveData(data);
+  },
+
+  declareBankruptcy(roomId: string, sessionToken: string) {
+    const data = loadData();
+    const player = Object.values(data.players).find(p => p.room_id === roomId && p.session_token === sessionToken);
+    if (!player) throw new Error('Oyuncu bulunamadı.');
+    if (player.is_bankrupt) throw new Error('Bu oyuncu zaten iflas etmiş.');
+
+    let cash = player.balance;
+    const playerDebts = Object.values(data.debts).filter(
+      d => d.debtor_id === player.id && (d.status === 'active' || d.status === 'partially_paid')
+    );
+    for (const d of playerDebts) {
+      if (cash > 0) {
+        const pay = Math.min(cash, d.remaining_amount);
+        const creditor = data.players[d.creditor_id];
+        if (creditor) creditor.balance += pay;
+        cash -= pay;
+      }
+      d.status = 'settled';
+      d.remaining_amount = 0;
+      d.description = (d.description || '') + ' (İflas ile kapatıldı)';
+    }
+
+    Object.values(data.debts)
+      .filter(d => d.creditor_id === player.id && (d.status === 'active' || d.status === 'partially_paid' || d.status === 'pending'))
+      .forEach(d => {
+        d.status = 'settled';
+        d.remaining_amount = 0;
+        d.description = (d.description || '') + ' (Alacaklı iflas ettiği için silindi)';
+      });
+
+    player.balance = 0;
+    player.is_bankrupt = true;
+    player.is_online = false;
+
+    const txId = 'tx_' + Math.random().toString(36).substring(2, 9);
+    data.transactions[txId] = {
+      id: txId,
+      room_id: roomId,
+      type: 'bankruptcy',
+      from_player_id: player.id,
+      to_player_id: null,
+      amount: 0,
+      description: `${player.name} iflas etti ve oyundan çekildi.`,
+      created_at: new Date().toISOString(),
+    };
+    saveData(data);
   }
 };
