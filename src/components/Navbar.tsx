@@ -28,8 +28,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [copied, setCopied] = useState(false);
 
   const handleCopyCode = async () => {
+    // Sadece 5 haneli rakam kısmını kopyala (WID- prefixi giriş ekranında zaten sabit var)
+    const codeDigits = room.code.replace(/^WID-?/i, '');
     try {
-      await navigator.clipboard.writeText(room.code);
+      await navigator.clipboard.writeText(codeDigits);
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch {
@@ -52,7 +54,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             type="button"
             onClick={handleCopyCode}
             className="flex items-center gap-1.5 bg-bg-surface hover:bg-bg-hover border border-border-subtle hover:border-border-active px-2.5 py-1 rounded-full transition-all active:scale-95 cursor-pointer group shadow-sm select-none"
-            title="Oda kodunu kopyala"
+            title={`Oda kodunu kopyala: ${room.code.replace(/^WID-?/i, '')}`}
           >
             <span
               className={`w-2 h-2 rounded-full shrink-0 transition-all ${
@@ -62,7 +64,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             />
             <span className="font-mono text-xs font-bold text-text-muted group-hover:text-text-main tracking-wider">
-              {room.code}
+              <span className="opacity-45 text-[10px] font-normal mr-0.5">WID-</span>
+              {room.code.replace(/^WID-?/i, '')}
             </span>
             {copied ? (
               <Check className="w-3 h-3 text-accent" />

@@ -307,13 +307,20 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                   inputMode="numeric"
                   pattern="[0-9]*"
                   value={roomDigits}
+                  onPaste={e => {
+                    e.preventDefault();
+                    const pasted = e.clipboardData.getData('text');
+                    const digitsOnly = pasted.replace(/\D/g, '').slice(0, 5);
+                    setRoomDigits(digitsOnly);
+                    setError(null);
+                  }}
                   onChange={e => {
                     const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 5);
                     setRoomDigits(digitsOnly);
                     setError(null);
                   }}
                   placeholder="12345"
-                  maxLength={5}
+                  maxLength={12}
                   className="w-full bg-transparent px-3 py-2.5 text-base font-mono font-bold text-text-main placeholder-text-muted/50 outline-none tracking-widest"
                   autoFocus
                 />

@@ -459,9 +459,10 @@ export const App: React.FC = () => {
 
   const handleCopyRoomCode = async () => {
     if (!roomState?.room.code) return;
+    const codeDigits = roomState.room.code.replace(/^WID-?/i, '');
     try {
-      await navigator.clipboard.writeText(roomState.room.code);
-      addToast(`Oda kodu kopyalandı: ${roomState.room.code}`, 'info');
+      await navigator.clipboard.writeText(codeDigits);
+      addToast(`Oda kodu kopyalandı: ${codeDigits}`, 'info');
     } catch {}
   };
 
