@@ -18,11 +18,17 @@ export const PlayerList: React.FC<PlayerListProps> = ({
   onSelectPlayer,
   onCopyRoomCode,
 }) => {
-  // Kullanıcının kendisi (Ben / Sen)
-  const me = players.find(p => p.id === currentPlayer?.id) || currentPlayer;
+  // Masada aktif olan oyuncular
+  const activePlayers = players.filter(p => p.is_online !== false);
 
-  // Diğer oyuncular (Alfabetik)
-  const otherPlayers = players
+  // Masadan çıkış yapmış olanlar
+  const offlinePlayers = players.filter(p => p.is_online === false && p.id !== currentPlayer?.id);
+
+  // Kullanıcının kendisi (Ben / Sen)
+  const me = activePlayers.find(p => p.id === currentPlayer?.id) || currentPlayer;
+
+  // Diğer aktif oyuncular (Alfabetik)
+  const otherPlayers = activePlayers
     .filter(p => p.id !== currentPlayer?.id)
     .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
@@ -56,7 +62,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({
         <div className="border-b border-white/[0.08]" />
       </div>
 
-      {/* 3. DİĞER OYUNCULAR */}
+      {/* 3. DİĞER AKTİF OYUNCULAR */}
       <div className="space-y-2">
         <div className="flex items-center justify-between px-1 text-xs">
           <div className="flex items-center gap-1.5 text-text-subtle font-bold text-[10px] uppercase tracking-wider">
@@ -102,6 +108,45 @@ export const PlayerList: React.FC<PlayerListProps> = ({
           </div>
         )}
       </div>
+
+      {/* 4. MASADAN AYRILAN OYUNCULAR (PIN İLE GERİ DÖNEBİLİRLER) */}
+      {offlinePlayers.length > 0 && (
+        <div className="pt-3 border-t border-white/[0.06] space-y-2">
+          <div className="flex items-center justify-between px-1 text-xs">
+            <span className="text-[10px] font-bold text-text-subtle uppercase tracking-wider">
+              Masadan Ayrılanlar ({offlinePlayers.length})
+            </span>
+            <span className="text-[10px] text-text-subtle">
+              PIN ile geri dönebilirler
+            </span>
+          </div>
+
+          <div className="space-y-1.5">
+            {offlinePlayers.map(p => (
+              <div
+                key={p.id}
+                onClick={() => onSelectPlayer(p)}
+                className="p-2.5 rounded-xl bg-bg-surface/50 border border-white/[0.05] hover:border-white/[0.12] flex items-center justify-between text-xs cursor-pointer transition-all group"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-text-muted group-hover:text-white transition-colors">
+                    {p.name}
+                  </span>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/[0.04] text-text-subtle">
+                    Ayrıldı
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 font-mono text-xs">
+                  <span className="text-[10px] text-text-subtle">PIN:</span>
+                  <span className="font-bold text-accent tracking-wider bg-bg-card border border-white/[0.08] px-2 py-0.5 rounded-md">
+                    {p.recovery_pin || '----'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

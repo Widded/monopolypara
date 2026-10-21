@@ -174,8 +174,13 @@ export const App: React.FC = () => {
   };
 
   // Leave room
-  const handleLeaveRoom = () => {
+  const handleLeaveRoom = async () => {
     if (window.confirm('Bu odadan ayrılmak istediğinizden emin misiniz?')) {
+      if (roomId) {
+        try {
+          await dataService.leaveRoom(roomId);
+        } catch {}
+      }
       localStorage.removeItem(CURRENT_ROOM_KEY);
       setRoomId(null);
       setRoomState(null);

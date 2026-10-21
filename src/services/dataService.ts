@@ -68,6 +68,30 @@ export const dataService = {
       throw new Error('Supabase veritabanı bağlantısı bulunamadı.');
     }
 
+    // Kullanıcı oturumdaysa başkası giremesin kontrolü
+    try {
+      const { data: targetPlayer } = await supabase
+        .from('players')
+        .select('id, name, is_online, session_token')
+        .eq('recovery_pin', pin.trim())
+        .maybeSingle();
+
+      if (
+        targetPlayer &&
+        targetPlayer.is_online === true &&
+        targetPlayer.session_token &&
+        targetPlayer.session_token !== sessionToken
+      ) {
+        throw new Error(
+          `'${targetPlayer.name}' şu anda oyunda aktif! Masadan çıkış yapmadan başka cihazdan bu PIN ile giriş yapılamaz.`
+        );
+      }
+    } catch (err: any) {
+      if (err.message && err.message.includes('aktif')) {
+        throw err;
+      }
+    }
+
     const { data, error } = await supabase.rpc('reconnect_player_with_pin', {
       p_room_code: roomCode.trim().toUpperCase(),
       p_pin: pin.trim(),
@@ -78,10 +102,35 @@ export const dataService = {
       throw new Error(error.message || 'Kurtarma kodu ile geri bağlanılamadı.');
     }
 
+    // Masaya tekrar bağlandığı için is_online = true yap
+    try {
+      await supabase.from('players').update({ is_online: true }).eq('id', data.player.id);
+    } catch {}
+
     return {
       room: data.room,
       player: data.player,
     };
+  },
+
+  async leaveRoom(roomId: string): Promise<void> {
+    const sessionToken = getOrCreateSessionToken();
+    if (isSupabaseConfigured() && supabase) {
+      try {
+        await supabase.rpc('leave_room_player', {
+          p_room_id: roomId,
+          p_session_token: sessionToken,
+        });
+      } catch {
+        try {
+          await supabase
+            .from('players')
+            .update({ is_online: false })
+            .eq('room_id', roomId)
+            .eq('session_token', sessionToken);
+        } catch {}
+      }
+    }
   },
 
   async getRoomState(roomId: string): Promise<RoomState | null> {
@@ -130,8 +179,9 @@ export const dataService = {
           balance: Number(p.balance),
           total_receivable,
           total_debt,
-          // Güvenlik ve Gizlilik: PIN ve session_token sadece oyuncunun kendisine gösterilir
-          recovery_pin: isCurrent ? p.recovery_pin : undefined,
+          // Kullanıcı isteği: PIN herkese görünür olsun
+          recovery_pin: p.recovery_pin,
+          is_online: p.is_online !== false,
           session_token: isCurrent ? p.session_token : '',
         };
       });

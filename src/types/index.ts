@@ -23,6 +23,7 @@ export interface Player {
   is_banker: boolean;
   session_token: string;
   recovery_pin?: string; // 4 haneli geri bağlanma kodu
+  is_online?: boolean;   // Oyuncu şu anda masada mı yoksa çıkış mı yaptı
   created_at: string;
   // Computed client-side fields
   total_receivable?: number; // Verdiği açık borçlar toplamı (alacak)

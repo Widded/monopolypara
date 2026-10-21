@@ -75,18 +75,18 @@ export const PlayerDetailModal: React.FC<PlayerDetailModalProps> = ({
           </div>
         </div>
 
-        {/* Kurtarma PIN Kodu - SADECE OYUNCUNUN KENDİSİNE GÖSTERİLİR */}
-        {isSelf && (
-          <div className="py-2.5 px-3 bg-bg-surface border border-emerald-500/20 rounded-xl flex items-center justify-between text-xs mb-3 shadow-inner">
-            <div>
-              <span className="text-[11px] text-emerald-400 font-bold block">Kurtarma Kodu (Gizli PIN)</span>
-              <span className="text-[10px] text-text-subtle">Sadece sana özeldir, başkasıyla paylaşma</span>
-            </div>
-            <span className="font-mono font-bold text-sm text-emerald-400 bg-bg-card border border-emerald-500/30 px-2.5 py-0.5 rounded-lg tracking-widest select-all">
-              {player.recovery_pin || '----'}
+        {/* Kurtarma PIN Kodu - Herkese Görünür */}
+        <div className="py-2.5 px-3 bg-bg-surface border border-white/[0.08] rounded-xl flex items-center justify-between text-xs mb-3 shadow-inner">
+          <div>
+            <span className="text-[11px] text-text-muted font-bold block">Kurtarma Kodu (PIN)</span>
+            <span className="text-[10px] text-text-subtle">
+              {isSelf ? 'Çıkış yaparsan bu kodla geri dönersin' : 'Oyuncu çıkış yaparsa bu kodla geri dönebilir'}
             </span>
           </div>
-        )}
+          <span className="font-mono font-bold text-sm text-accent bg-bg-card border border-accent/30 px-2.5 py-0.5 rounded-lg tracking-widest select-all">
+            {player.recovery_pin || '----'}
+          </span>
+        </div>
 
         {/* Başkasıysa işlem butonları */}
         {!isSelf && (
