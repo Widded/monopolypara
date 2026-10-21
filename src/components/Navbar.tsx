@@ -45,12 +45,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <header className="shrink-0 z-30 bg-bg-main/95 backdrop-blur-md border-b border-border-subtle px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-3">
       <div className="max-w-md mx-auto flex items-center justify-between gap-3">
-        {/* Sol: Logo + Oda Kodu Hapı + Yenileme & Tema Butonu */}
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="font-extrabold text-[16px] tracking-tight text-text-main select-none shrink-0">
-            MONOPOLY
-          </span>
-
+        {/* Sol: Oda Kodu Hapı + Yenileme & Tema & İstatistik Butonları */}
+        <div className="flex items-center gap-1.5 min-w-0">
           {/* Oda Kodu Glass Pill */}
           <button
             type="button"
