@@ -77,6 +77,21 @@ export const PlayerDetailModal: React.FC<PlayerDetailModalProps> = ({
           </div>
         </div>
 
+        {/* Recovery PIN notice */}
+        <div className="p-2.5 bg-bg-surface border border-border-subtle rounded-xl flex items-center justify-between text-xs mb-3">
+          <div>
+            <span className="text-[10px] text-text-muted font-bold uppercase tracking-wider block">
+              Kurtarma Kodu (PIN)
+            </span>
+            <span className="text-[11px] text-text-muted/80">
+              Odadan çıkarsa bu kodla geri dönebilir
+            </span>
+          </div>
+          <span className="font-mono font-bold text-sm text-accent bg-accent/15 border border-accent/30 px-2.5 py-1 rounded-lg shrink-0 ml-2">
+            {player.recovery_pin || '1234'}
+          </span>
+        </div>
+
         {/* Quick action buttons if not self */}
         {!isSelf && (
           <div className="grid grid-cols-2 gap-2 mb-3">

@@ -22,6 +22,7 @@ export interface Player {
   balance: number;
   is_banker: boolean;
   session_token: string;
+  recovery_pin?: string; // 4 haneli geri bağlanma kodu
   created_at: string;
   // Computed client-side fields
   total_receivable?: number; // Verdiği açık borçlar toplamı (alacak)

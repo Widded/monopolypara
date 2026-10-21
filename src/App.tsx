@@ -118,6 +118,15 @@ export const App: React.FC = () => {
     await refreshRoomState();
   };
 
+  // Reconnect with recovery PIN
+  const handleReconnectWithPin = async (roomCode: string, pin: string) => {
+    const { room, player } = await dataService.reconnectWithPin(roomCode, pin);
+    localStorage.setItem(CURRENT_ROOM_KEY, room.id);
+    setRoomId(room.id);
+    addToast(`Hoş geldin ${player.name}! Varlıklarınla geri bağlandın.`, 'success');
+    await refreshRoomState();
+  };
+
   // Leave room
   const handleLeaveRoom = () => {
     if (window.confirm('Bu odadan ayrılmak istediğinizden emin misiniz?')) {
@@ -215,6 +224,7 @@ export const App: React.FC = () => {
         <WelcomeScreen
           onCreateRoom={handleCreateRoom}
           onJoinRoom={handleJoinRoom}
+          onReconnectWithPin={handleReconnectWithPin}
         />
       </>
     );

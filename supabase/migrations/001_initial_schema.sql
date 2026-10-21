@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS players (
     balance NUMERIC NOT NULL DEFAULT 1500 CHECK (balance >= 0),
     is_banker BOOLEAN NOT NULL DEFAULT false,
     session_token TEXT NOT NULL,
+    recovery_pin TEXT NOT NULL DEFAULT LPAD(FLOOR(RANDOM() * 10000)::TEXT, 4, '0'),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT unique_room_player_name UNIQUE (room_id, name)
 );
@@ -570,5 +571,43 @@ BEGIN
     END IF;
 
     RETURN jsonb_build_object('success', true, 'new_balance', v_new_balance);
+END;
+$$;
+
+-- 8. KURTARMA KODUYLA OYUNA GERİ BAĞLANMA (ODADAN ÇIKAN VEYA OTURUMU KAYBEDEN OYUNCU)
+CREATE OR REPLACE FUNCTION reconnect_player_with_pin(
+    p_room_code TEXT,
+    p_pin TEXT,
+    p_session_token TEXT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_room rooms%ROWTYPE;
+    v_player players%ROWTYPE;
+    v_result JSONB;
+BEGIN
+    SELECT * INTO v_room FROM rooms WHERE UPPER(code) = UPPER(p_room_code) AND status = 'active';
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Oda bulunamadı veya kapatılmış.';
+    END IF;
+
+    SELECT * INTO v_player FROM players WHERE room_id = v_room.id AND recovery_pin = p_pin;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Bu kurtarma koduna sahip bir oyuncu bulunamadı. Lütfen odadakilerden kodunuzu teyit edin.';
+    END IF;
+
+    -- Oturum anahtarını bu yeni cihaza/tarayıcıya ata
+    UPDATE players SET session_token = p_session_token WHERE id = v_player.id;
+    v_player.session_token := p_session_token;
+
+    SELECT jsonb_build_object(
+        'room', row_to_json(v_room),
+        'player', row_to_json(v_player)
+    ) INTO v_result;
+
+    RETURN v_result;
 END;
 $$;

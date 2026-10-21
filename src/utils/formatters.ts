@@ -60,6 +60,13 @@ export function generateRoomCode(): string {
 }
 
 /**
+ * Generates a 4-digit player recovery PIN: e.g. '7492'
+ */
+export function generateRecoveryPin(): string {
+  return Math.floor(1000 + Math.random() * 9000).toString();
+}
+
+/**
  * Generates a secure client session token stored in localStorage
  */
 export function getOrCreateSessionToken(): string {

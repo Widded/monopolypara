@@ -57,6 +57,7 @@ export const mockStorage = {
       balance: 1500,
       is_banker: true,
       session_token: sessionToken,
+      recovery_pin: Math.floor(1000 + Math.random() * 9000).toString(),
       created_at: new Date().toISOString(),
     };
 
@@ -98,7 +99,7 @@ export const mockStorage = {
       p => p.room_id === room.id && p.name.trim().toLowerCase() === playerName.trim().toLowerCase()
     );
     if (existingPlayerByName) {
-      throw new Error('Bu isimde bir oyuncu zaten odada var. Lütfen farklı bir isim seçin.');
+      throw new Error('Bu isimde bir oyuncu zaten odada var. Eğer bu sizseniz Kurtarma Kodu ile geri bağlanabilirsiniz.');
     }
 
     const playerId = 'player_' + Math.random().toString(36).substring(2, 9);
@@ -109,6 +110,7 @@ export const mockStorage = {
       balance: 1500,
       is_banker: false,
       session_token: sessionToken,
+      recovery_pin: Math.floor(1000 + Math.random() * 9000).toString(),
       created_at: new Date().toISOString(),
     };
 
@@ -116,6 +118,31 @@ export const mockStorage = {
     saveData(data);
 
     return { room, player: newPlayer };
+  },
+
+  reconnectWithPin(roomCode: string, pin: string, sessionToken: string): { room: Room; player: Player } {
+    const data = loadData();
+    const room = Object.values(data.rooms).find(
+      r => r.code.toUpperCase() === roomCode.trim().toUpperCase() && r.status === 'active'
+    );
+
+    if (!room) {
+      throw new Error('Oda bulunamadı veya kapatılmış.');
+    }
+
+    const player = Object.values(data.players).find(
+      p => p.room_id === room.id && p.recovery_pin === pin.trim()
+    );
+
+    if (!player) {
+      throw new Error('Bu koda sahip bir oyuncu bulunamadı. Lütfen odadaki arkadaşlarınıza kodunuzu sorun.');
+    }
+
+    // Rebind session token
+    player.session_token = sessionToken;
+    saveData(data);
+
+    return { room, player };
   },
 
   getRoomState(roomId: string, sessionToken: string) {

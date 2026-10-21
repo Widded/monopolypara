@@ -1,18 +1,22 @@
 import React, { useState } from 'react';
-import { PlusCircle, LogIn, ArrowRight, AlertTriangle, Loader2 } from 'lucide-react';
+import { PlusCircle, LogIn, ArrowRight, AlertTriangle, Loader2, KeyRound, UserCheck } from 'lucide-react';
 
 interface WelcomeScreenProps {
   onCreateRoom: (playerName: string) => Promise<void>;
   onJoinRoom: (roomCode: string, playerName: string) => Promise<void>;
+  onReconnectWithPin: (roomCode: string, pin: string) => Promise<void>;
 }
 
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   onCreateRoom,
   onJoinRoom,
+  onReconnectWithPin,
 }) => {
   const [mode, setMode] = useState<'selection' | 'create' | 'join'>('selection');
+  const [joinType, setJoinType] = useState<'new' | 'reconnect'>('new');
   const [playerName, setPlayerName] = useState<string>('');
   const [roomDigits, setRoomDigits] = useState<string>('');
+  const [recoveryPin, setRecoveryPin] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,17 +46,31 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       setError('Lütfen oda kodunu girin.');
       return;
     }
-    if (!playerName.trim()) {
-      setError('Lütfen adınızı girin.');
-      return;
-    }
+
     const fullRoomCode = `WID-${cleanDigits}`;
     setLoading(true);
     setError(null);
+
     try {
-      await onJoinRoom(fullRoomCode, playerName.trim());
+      if (joinType === 'new') {
+        if (!playerName.trim()) {
+          setError('Lütfen adınızı girin.');
+          setLoading(false);
+          return;
+        }
+        await onJoinRoom(fullRoomCode, playerName.trim());
+      } else {
+        // Reconnect with recovery PIN
+        const cleanPin = recoveryPin.replace(/\D/g, '');
+        if (!cleanPin || cleanPin.length < 4) {
+          setError('Lütfen 4 haneli kurtarma PIN kodunuzu girin.');
+          setLoading(false);
+          return;
+        }
+        await onReconnectWithPin(fullRoomCode, cleanPin);
+      }
     } catch (err: any) {
-      setError(err.message || 'Odaya katılınamadı.');
+      setError(err.message || 'İşlem gerçekleştirilemedi.');
     } finally {
       setLoading(false);
     }
@@ -98,6 +116,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             <button
               onClick={() => {
                 setMode('join');
+                setJoinType('new');
                 setError(null);
               }}
               className="btn-secondary w-full py-3.5 text-sm font-semibold"
@@ -191,12 +210,12 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           </form>
         )}
 
-        {/* State 3: Join Room */}
+        {/* State 3: Join Room (With Normal vs Reconnect PIN tabs) */}
         {mode === 'join' && (
           <form onSubmit={handleJoin} className="card p-4 space-y-3.5 animate-in fade-in duration-150">
             <div className="flex items-center justify-between">
               <h2 className="text-xs font-bold text-text-main uppercase tracking-wider">
-                Odaya Katıl
+                Odaya Bağlan
               </h2>
               <button
                 type="button"
@@ -207,17 +226,50 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               </button>
             </div>
 
-            {/* Room Code Input with fixed WID- prefix and native numeric keyboard */}
+            {/* Sub-mode Tab: New Join vs Reconnect PIN */}
+            <div className="grid grid-cols-2 p-1 bg-bg-surface border border-border-subtle rounded-xl text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => {
+                  setJoinType('new');
+                  setError(null);
+                }}
+                className={`py-1.5 rounded-lg transition-all flex items-center justify-center gap-1 ${
+                  joinType === 'new'
+                    ? 'bg-bg-card text-text-main shadow-sm'
+                    : 'text-text-muted hover:text-text-main'
+                }`}
+              >
+                <UserCheck className="w-3.5 h-3.5" />
+                <span>Yeni Katıl</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setJoinType('reconnect');
+                  setError(null);
+                }}
+                className={`py-1.5 rounded-lg transition-all flex items-center justify-center gap-1 ${
+                  joinType === 'reconnect'
+                    ? 'bg-bg-card text-accent shadow-sm'
+                    : 'text-text-muted hover:text-text-main'
+                }`}
+              >
+                <KeyRound className="w-3.5 h-3.5" />
+                <span>Geri Dön (PIN)</span>
+              </button>
+            </div>
+
+            {/* Room Code Input with fixed WID- prefix */}
             <div>
               <label className="block text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-1">
-                Oda Kodu (Yalnızca Rakam)
+                Oda Kodu (5 Hane)
               </label>
               <div className="flex items-center rounded-xl bg-bg-surface border border-border-subtle focus-within:border-accent focus-within:ring-1 focus-within:ring-accent overflow-hidden transition-all">
-                {/* Fixed, unchangeable prefix */}
                 <span className="bg-[#151921] border-r border-border-subtle px-3 py-2.5 font-mono font-bold text-accent text-sm select-none tracking-wider shrink-0">
                   WID-
                 </span>
-                {/* Numeric input triggering native mobile numeric keyboard */}
                 <input
                   type="text"
                   inputMode="numeric"
@@ -236,64 +288,110 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               </div>
             </div>
 
-            {/* Player Name */}
-            <div>
-              <label className="block text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-1">
-                Oyuncu Adınız
-              </label>
-              <input
-                type="text"
-                value={playerName}
-                onChange={e => {
-                  setPlayerName(e.target.value);
-                  setError(null);
-                }}
-                placeholder="Örn: Mehmet"
-                maxLength={24}
-                className="input-field text-base py-2.5 font-medium"
-              />
-            </div>
-
-            {/* Quick Name Chips */}
-            <div>
-              <div className="text-[10px] text-text-muted uppercase font-semibold mb-1">
-                Hızlı İsimler
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {quickNames.map(name => (
-                  <button
-                    key={name}
-                    type="button"
-                    onClick={() => {
-                      setPlayerName(name);
+            {/* Tab 1: New Player Name */}
+            {joinType === 'new' ? (
+              <>
+                <div>
+                  <label className="block text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-1">
+                    Oyuncu Adınız
+                  </label>
+                  <input
+                    type="text"
+                    value={playerName}
+                    onChange={e => {
+                      setPlayerName(e.target.value);
                       setError(null);
                     }}
-                    className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
-                      playerName === name
-                        ? 'bg-accent/20 border-accent text-accent font-semibold'
-                        : 'bg-bg-surface border-border-subtle text-text-muted hover:text-text-main'
-                    }`}
-                  >
-                    {name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading || !roomDigits.trim() || !playerName.trim()}
-              className="btn-primary w-full py-3 text-xs font-bold mt-1"
-            >
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <div className="flex items-center justify-center gap-1.5">
-                  <span>Odaya Katıl</span>
-                  <ArrowRight className="w-4 h-4" />
+                    placeholder="Örn: Mehmet"
+                    maxLength={24}
+                    className="input-field text-base py-2.5 font-medium"
+                  />
                 </div>
-              )}
-            </button>
+
+                {/* Quick Name Chips */}
+                <div>
+                  <div className="text-[10px] text-text-muted uppercase font-semibold mb-1">
+                    Hızlı İsimler
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {quickNames.map(name => (
+                      <button
+                        key={name}
+                        type="button"
+                        onClick={() => {
+                          setPlayerName(name);
+                          setError(null);
+                        }}
+                        className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
+                          playerName === name
+                            ? 'bg-accent/20 border-accent text-accent font-semibold'
+                            : 'bg-bg-surface border-border-subtle text-text-muted hover:text-text-main'
+                        }`}
+                      >
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading || !roomDigits.trim() || !playerName.trim()}
+                  className="btn-primary w-full py-3 text-xs font-bold mt-1"
+                >
+                  {loading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <div className="flex items-center justify-center gap-1.5">
+                      <span>Odaya Katıl (1.500 ₺)</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </div>
+                  )}
+                </button>
+              </>
+            ) : (
+              /* Tab 2: Reconnect with 4-digit PIN */
+              <>
+                <div>
+                  <label className="block text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-1">
+                    4 Haneli Kurtarma Kodu (PIN)
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={recoveryPin}
+                    onChange={e => {
+                      const clean = e.target.value.replace(/\D/g, '').slice(0, 4);
+                      setRecoveryPin(clean);
+                      setError(null);
+                    }}
+                    placeholder="Örn: 4829"
+                    maxLength={4}
+                    className="input-field text-xl font-mono font-bold tracking-widest text-center py-2.5 text-accent"
+                  />
+                </div>
+
+                <div className="p-2.5 bg-bg-surface border border-border-subtle rounded-xl text-xs text-text-muted leading-relaxed">
+                  💡 <strong>Nasıl Öğrenirim?</strong> Odadaki arkadaşlarınız kendi ekranlarında sizin kartınızda görünen <strong>PIN: XXXX</strong> kodunu size okuyabilir.
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading || !roomDigits.trim() || recoveryPin.length < 4}
+                  className="btn-primary w-full py-3 text-xs font-bold mt-1"
+                >
+                  {loading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <div className="flex items-center justify-center gap-1.5">
+                      <span>Varlıklarımı Kurtar ve Geri Bağlan</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </div>
+                  )}
+                </button>
+              </>
+            )}
           </form>
         )}
       </div>

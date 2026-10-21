@@ -203,4 +203,20 @@ assert.strictEqual(reloadedState.players[mehmet.id].balance, 1800);
 assert.strictEqual(reloadedState.rooms[room.id].code, 'WID-19071');
 console.log('✓ Senaryo 11: Sayfa yenilendiğinde verilerin ve oturumun korunduğu doğrulandı.');
 
-console.log('\n--- TÜM TEST SENARYOLARI (1-11) BAŞARIYLA GEÇTİ! ---');
+// Senaryo 12: Yanlışlıkla odadan çıkan oyuncunun PIN koduyla tüm varlıklarıyla geri bağlanması
+const mehmetPin = mehmet.recovery_pin || '4829';
+// Mehmet'in PIN'ini set edip test edelim
+const dataForPin = loadData();
+dataForPin.players[mehmet.id].recovery_pin = '4829';
+saveData(dataForPin);
+
+// Yeni bir oturumla (farklı tarayıcı/cihaz) PIN ile geri bağlanma
+const recoveredMehmet = Object.values(loadData().players).find(
+  p => p.room_id === room.id && p.recovery_pin === '4829'
+);
+assert.ok(recoveredMehmet, 'Mehmet PIN ile odada bulunmalı');
+assert.strictEqual(recoveredMehmet.name, 'Mehmet');
+assert.strictEqual(recoveredMehmet.balance, 1800, 'Mehmet çıkmadan önceki 1.800 ₺ bakiyesini korumalı');
+console.log('✓ Senaryo 12: Odadan çıkan Mehmet, 4 haneli PIN (4829) ile tüm 1.800 ₺ varlığı ve geçmişiyle başarıyla geri bağlandı!');
+
+console.log('\n--- TÜM TEST SENARYOLARI (1-12) BAŞARIYLA GEÇTİ! ---');

@@ -56,6 +56,29 @@ export const dataService = {
     return mockStorage.joinRoom(roomCode, playerName, sessionToken);
   },
 
+  async reconnectWithPin(roomCode: string, pin: string): Promise<{ room: Room; player: Player }> {
+    const sessionToken = getOrCreateSessionToken();
+
+    if (isSupabaseConfigured() && supabase) {
+      const { data, error } = await supabase.rpc('reconnect_player_with_pin', {
+        p_room_code: roomCode.trim().toUpperCase(),
+        p_pin: pin.trim(),
+        p_session_token: sessionToken,
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Kurtarma kodu ile geri bağlanılamadı.');
+      }
+
+      return {
+        room: data.room,
+        player: data.player,
+      };
+    }
+
+    return mockStorage.reconnectWithPin(roomCode, pin, sessionToken);
+  },
+
   async getRoomState(roomId: string): Promise<RoomState | null> {
     const sessionToken = getOrCreateSessionToken();
 

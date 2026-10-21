@@ -75,7 +75,17 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
           )}
         </div>
 
-        <ChevronRight className="w-4 h-4 text-text-muted/60 shrink-0" />
+        <div className="flex items-center gap-1.5 shrink-0">
+          {player.recovery_pin && (
+            <span
+              className="text-[10px] font-mono font-bold text-text-muted/80 bg-bg-surface border border-border-subtle/80 px-1.5 py-0.5 rounded"
+              title="Oyuncu Kurtarma Kodu (Geri Katılma)"
+            >
+              PIN: {player.recovery_pin}
+            </span>
+          )}
+          <ChevronRight className="w-4 h-4 text-text-muted/60" />
+        </div>
       </div>
 
       {/* Row 2: Big Bold Balance */}
