@@ -29,7 +29,7 @@ export const PlayerDetailModal: React.FC<PlayerDetailModalProps> = ({
   if (!isOpen || !player) return null;
 
   const isSelf = player.id === currentPlayer.id;
-  const playerDebts = debts.filter(d => d.debtor_id === player.id && d.status !== 'settled');
+  const playerDebts = debts.filter(d => d.debtor_id === player.id && (d.status === 'active' || d.status === 'partially_paid'));
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-100">

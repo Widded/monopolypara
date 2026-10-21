@@ -5,7 +5,7 @@ export type TransactionType =
   | 'debt_settlement' 
   | 'banker_adjust';
 
-export type DebtStatus = 'active' | 'partially_paid' | 'settled';
+export type DebtStatus = 'pending' | 'rejected' | 'active' | 'partially_paid' | 'settled';
 
 export interface Room {
   id: string;

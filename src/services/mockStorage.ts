@@ -162,12 +162,12 @@ export const mockStorage = {
     const populatedPlayers = players.map(p => {
       // Receivables: debts where p is creditor and remaining > 0
       const total_receivable = debts
-        .filter(d => d.creditor_id === p.id && d.status !== 'settled')
+        .filter(d => d.creditor_id === p.id && (d.status === 'active' || d.status === 'partially_paid'))
         .reduce((sum, d) => sum + d.remaining_amount, 0);
 
       // Debts: debts where p is debtor and remaining > 0
       const total_debt = debts
-        .filter(d => d.debtor_id === p.id && d.status !== 'settled')
+        .filter(d => d.debtor_id === p.id && (d.status === 'active' || d.status === 'partially_paid'))
         .reduce((sum, d) => sum + d.remaining_amount, 0);
 
       return {
@@ -240,11 +240,7 @@ export const mockStorage = {
     if (!creditor || !debtor) throw new Error('Oyuncu bulunamadı.');
     if (creditor.balance < amount) throw new Error(`Yetersiz bakiye! Mevcut nakit: ${creditor.balance} ₺`);
 
-    // Cash movement
-    creditor.balance -= amount;
-    debtor.balance += amount;
-
-    // Debt record
+    // Borç teklifi pending olarak oluşturulur, para borçlu onaylayana kadar düşmez
     const debtId = 'debt_' + Math.random().toString(36).substring(2, 9);
     data.debts[debtId] = {
       id: debtId,
@@ -254,24 +250,58 @@ export const mockStorage = {
       initial_amount: amount,
       paid_amount: 0,
       remaining_amount: amount,
-      status: 'active',
+      status: 'pending',
       description: description || undefined,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
 
-    // Transaction
+    saveData(data);
+  },
+
+  approveDebt(roomId: string, debtId: string) {
+    const data = loadData();
+    const debt = data.debts[debtId];
+    if (!debt || debt.room_id !== roomId) throw new Error('Borç kaydı bulunamadı.');
+    if (debt.status !== 'pending') throw new Error('Bu borç teklifi onay bekleyen durumda değil.');
+
+    const creditor = data.players[debt.creditor_id];
+    const debtor = data.players[debt.debtor_id];
+    if (!creditor || !debtor) throw new Error('Oyuncu bulunamadı.');
+
+    if (creditor.balance < debt.initial_amount) {
+      throw new Error(`Alacaklı oyuncunun (${creditor.name}) bakiyesi yetersiz! (Mevcut: ${creditor.balance} ₺)`);
+    }
+
+    // Para hareketi şimdi gerçekleşir
+    creditor.balance -= debt.initial_amount;
+    debtor.balance += debt.initial_amount;
+    debt.status = 'active';
+    debt.updated_at = new Date().toISOString();
+
     const txId = 'tx_' + Math.random().toString(36).substring(2, 9);
     data.transactions[txId] = {
       id: txId,
       room_id: roomId,
       type: 'debt_lend',
-      from_player_id: creditorId,
-      to_player_id: debtorId,
-      amount,
-      description: description || 'Borç verme',
+      from_player_id: debt.creditor_id,
+      to_player_id: debt.debtor_id,
+      amount: debt.initial_amount,
+      description: debt.description || 'Borç onaylandı ve verildi',
       created_at: new Date().toISOString(),
     };
+
+    saveData(data);
+  },
+
+  rejectDebt(roomId: string, debtId: string) {
+    const data = loadData();
+    const debt = data.debts[debtId];
+    if (!debt || debt.room_id !== roomId) throw new Error('Borç kaydı bulunamadı.');
+    if (debt.status !== 'pending') throw new Error('Bu borç teklifi zaten onaylanmış veya sonuçlandırılmış.');
+
+    debt.status = 'rejected';
+    debt.updated_at = new Date().toISOString();
 
     saveData(data);
   },

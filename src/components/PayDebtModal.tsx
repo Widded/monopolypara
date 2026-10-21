@@ -31,7 +31,7 @@ export const PayDebtModal: React.FC<PayDebtModalProps> = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const activeDebts = debts.filter(d => d.status !== 'settled' && d.remaining_amount > 0);
+  const activeDebts = debts.filter(d => (d.status === 'active' || d.status === 'partially_paid') && d.remaining_amount > 0);
 
   useEffect(() => {
     if (isOpen) {

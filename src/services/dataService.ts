@@ -122,11 +122,11 @@ export const dataService = {
       // Compute receivables and debts for each player
       const populatedPlayers = playersList.map(p => {
         const total_receivable = debtsList
-          .filter(d => d.creditor_id === p.id && d.status !== 'settled')
+          .filter(d => d.creditor_id === p.id && (d.status === 'active' || d.status === 'partially_paid'))
           .reduce((sum, d) => sum + Number(d.remaining_amount), 0);
 
         const total_debt = debtsList
-          .filter(d => d.debtor_id === p.id && d.status !== 'settled')
+          .filter(d => d.debtor_id === p.id && (d.status === 'active' || d.status === 'partially_paid'))
           .reduce((sum, d) => sum + Number(d.remaining_amount), 0);
 
         return {
@@ -238,6 +238,44 @@ export const dataService = {
     }
 
     mockStorage.lendDebt(roomId, creditorId, debtorId, amount, description);
+  },
+
+  async approveDebt(roomId: string, debtId: string): Promise<void> {
+    const sessionToken = getOrCreateSessionToken();
+
+    if (isSupabaseConfigured() && supabase) {
+      const { error } = await supabase.rpc('approve_debt', {
+        p_room_id: roomId,
+        p_session_token: sessionToken,
+        p_debt_id: debtId,
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Borç onaylama başarısız.');
+      }
+      return;
+    }
+
+    mockStorage.approveDebt(roomId, debtId);
+  },
+
+  async rejectDebt(roomId: string, debtId: string): Promise<void> {
+    const sessionToken = getOrCreateSessionToken();
+
+    if (isSupabaseConfigured() && supabase) {
+      const { error } = await supabase.rpc('reject_debt', {
+        p_room_id: roomId,
+        p_session_token: sessionToken,
+        p_debt_id: debtId,
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Borç iptal/reddetme başarısız.');
+      }
+      return;
+    }
+
+    mockStorage.rejectDebt(roomId, debtId);
   },
 
   async payDebt(roomId: string, debtId: string, amount: number): Promise<void> {

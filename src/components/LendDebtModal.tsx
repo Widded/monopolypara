@@ -160,9 +160,14 @@ export const LendDebtModal: React.FC<LendDebtModalProps> = ({
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <span>
-                {debtor ? `${debtor.name}'e ${formatMoney(amount)} Borç Ver` : 'Borç Ver'}
-              </span>
+              <div className="flex flex-col items-center">
+                <span>
+                  {debtor ? `${debtor.name}'e Borç Teklifi Gönder` : 'Borç Teklifi Gönder'}
+                </span>
+                <span className="text-[10px] font-normal opacity-80">
+                  Karşı taraf onayladığında aktarılır
+                </span>
+              </div>
             )}
           </button>
         </form>

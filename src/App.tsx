@@ -14,6 +14,7 @@ import { DebtDetailModal } from './components/DebtDetailModal';
 import { BankerPanelModal } from './components/BankerPanelModal';
 import { PlayerDetailModal } from './components/PlayerDetailModal';
 import { HistoryViewModal } from './components/HistoryViewModal';
+import { PendingDebtBanner } from './components/PendingDebtBanner';
 import { Toast, ToastMessage } from './components/Toast';
 
 const CURRENT_ROOM_KEY = 'monopoly_active_room_id';
@@ -150,9 +151,33 @@ export const App: React.FC = () => {
   const handleLendDebt = async (creditorId: string, debtorId: string, amount: number, description?: string) => {
     if (!roomId) return;
     await dataService.lendDebt(roomId, creditorId, debtorId, amount, description);
-    triggerConfetti();
-    addToast('Borç başarıyla tanımlandı ve nakit aktarıldı.', 'success');
+    addToast('Borç teklifi gönderildi. Karşı tarafın onayı bekleniyor.', 'info');
     await refreshRoomState();
+  };
+
+  // Approve Debt (Recipient confirms)
+  const handleApproveDebt = async (debtId: string) => {
+    if (!roomId) return;
+    try {
+      await dataService.approveDebt(roomId, debtId);
+      triggerConfetti();
+      addToast('Borç teklifini onayladınız! Para hesabınıza aktarıldı.', 'success');
+      await refreshRoomState();
+    } catch (err: any) {
+      addToast(err.message || 'Borç onaylanamadı.', 'error');
+    }
+  };
+
+  // Reject / Cancel Debt Offer
+  const handleRejectDebt = async (debtId: string) => {
+    if (!roomId) return;
+    try {
+      await dataService.rejectDebt(roomId, debtId);
+      addToast('Borç teklifi iptal edildi / reddedildi.', 'info');
+      await refreshRoomState();
+    } catch (err: any) {
+      addToast(err.message || 'İşlem başarısız.', 'error');
+    }
   };
 
   // Pay Debt
@@ -232,7 +257,7 @@ export const App: React.FC = () => {
 
   const { room, currentPlayer, players, debts, transactions } = roomState;
   const totalCash = players.reduce((sum, p) => sum + p.balance, 0);
-  const activeDebtsCount = debts.filter(d => d.status !== 'settled' && d.remaining_amount > 0).length;
+  const activeDebtsCount = debts.filter(d => (d.status === 'active' || d.status === 'partially_paid') && d.remaining_amount > 0).length;
 
   return (
     <div className="h-[100dvh] w-full bg-bg-main text-text-main flex flex-col overflow-hidden">
@@ -257,6 +282,14 @@ export const App: React.FC = () => {
           totalCash={totalCash}
           lastTransaction={transactions[0]}
           onOpenHistory={() => setIsHistoryOpen(true)}
+        />
+
+        {/* Pending Debt Approvals */}
+        <PendingDebtBanner
+          debts={debts}
+          currentPlayer={currentPlayer}
+          onApprove={handleApproveDebt}
+          onReject={handleRejectDebt}
         />
 
         {/* Players List */}
