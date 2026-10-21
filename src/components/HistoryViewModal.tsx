@@ -78,8 +78,8 @@ export const HistoryViewModal: React.FC<HistoryViewModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-100 overflow-y-auto">
-      <div className="bg-bg-card border border-border-subtle w-full max-w-sm rounded-2xl p-4 shadow-xl max-h-[88dvh] flex flex-col my-auto animate-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-100 overflow-y-auto">
+      <div className="bg-[#0E1218] border border-white/[0.08] w-full max-w-sm rounded-3xl p-4.5 sm:p-5 shadow-2xl shadow-black/90 max-h-[90dvh] flex flex-col my-auto animate-in zoom-in-95 duration-150">
         {/* Header */}
         <div className="flex items-center justify-between pb-2.5 border-b border-border-subtle mb-2.5">
           <div className="flex items-center gap-1.5">

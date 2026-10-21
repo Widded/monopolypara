@@ -31,28 +31,28 @@ const ToastItem: React.FC<{ toast: ToastMessage; onDismiss: (id: string) => void
   }, [toast.id, onDismiss]);
 
   const icons = {
-    success: <CheckCircle2 className="w-5 h-5 text-money-pos shrink-0" />,
-    error: <AlertCircle className="w-5 h-5 text-money-neg shrink-0" />,
-    info: <Info className="w-5 h-5 text-accent shrink-0" />,
+    success: <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />,
+    error: <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />,
+    info: <Info className="w-5 h-5 text-emerald-400 shrink-0" />,
   };
 
   const borders = {
-    success: 'border-money-pos/30 bg-bg-card/95',
-    error: 'border-money-neg/30 bg-bg-card/95',
-    info: 'border-accent/30 bg-bg-card/95',
+    success: 'border-emerald-500/30 bg-[#0E1218]/95',
+    error: 'border-rose-500/30 bg-[#0E1218]/95',
+    info: 'border-white/[0.12] bg-[#0E1218]/95',
   };
 
   return (
     <div
-      className={`pointer-events-auto flex items-center justify-between gap-3 p-3.5 rounded-xl border ${borders[toast.type]} shadow-xl backdrop-blur-md animate-in fade-in slide-in-from-top-2 duration-200`}
+      className={`pointer-events-auto flex items-center justify-between gap-3 p-3.5 rounded-2xl border ${borders[toast.type]} shadow-2xl shadow-black/80 backdrop-blur-xl animate-in fade-in slide-in-from-top-2 duration-200`}
     >
       <div className="flex items-center gap-2.5 overflow-hidden">
         {icons[toast.type]}
-        <p className="text-sm font-medium text-text-main truncate">{toast.message}</p>
+        <p className="text-sm font-medium text-white truncate">{toast.message}</p>
       </div>
       <button
         onClick={() => onDismiss(toast.id)}
-        className="text-text-muted hover:text-text-main p-1 transition-colors"
+        className="text-neutral-400 hover:text-white p-1 transition-colors cursor-pointer"
       >
         <X className="w-4 h-4" />
       </button>

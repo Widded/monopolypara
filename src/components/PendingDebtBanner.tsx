@@ -43,24 +43,24 @@ export const PendingDebtBanner: React.FC<PendingDebtBannerProps> = ({
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 select-none">
       {/* Gelen Borç Teklifi */}
       {incomingPending.map(debt => (
         <div
           key={debt.id}
-          className="bg-bg-surface border border-border-active rounded-lg p-3 text-xs"
+          className="bg-[#0E1218] border border-emerald-500/30 rounded-2xl p-3.5 text-xs shadow-lg animate-in fade-in"
         >
-          <div className="flex items-baseline justify-between gap-2 mb-1">
-            <span className="font-semibold text-text-main">
+          <div className="flex items-baseline justify-between gap-2 mb-1.5">
+            <span className="font-bold text-white text-sm">
               {debt.creditor_name} size borç teklif etti
             </span>
-            <span className="font-money font-bold text-money-pos text-sm">
+            <span className="font-mono font-bold text-emerald-400 text-base">
               +{formatMoney(debt.initial_amount)}
             </span>
           </div>
 
           {debt.description && (
-            <p className="text-[11px] text-text-muted mb-2">"{debt.description}"</p>
+            <p className="text-xs text-neutral-400 mb-2.5">"{debt.description}"</p>
           )}
 
           <div className="flex items-center gap-2 mt-2">
@@ -68,7 +68,7 @@ export const PendingDebtBanner: React.FC<PendingDebtBannerProps> = ({
               type="button"
               disabled={processingId === debt.id}
               onClick={() => handleAction(debt.id, 'approve')}
-              className="btn-primary flex-1 py-1.5 text-xs font-bold"
+              className="btn-primary flex-1 py-2 text-xs font-bold"
             >
               {processingId === debt.id ? 'İşleniyor...' : 'Kabul Et'}
             </button>
@@ -76,7 +76,7 @@ export const PendingDebtBanner: React.FC<PendingDebtBannerProps> = ({
               type="button"
               disabled={processingId === debt.id}
               onClick={() => handleAction(debt.id, 'reject')}
-              className="btn-secondary py-1.5 px-3 text-xs text-money-neg hover:text-money-neg"
+              className="btn-secondary py-2 px-4 text-xs text-rose-400 hover:text-rose-300 font-semibold"
             >
               Reddet
             </button>
@@ -88,17 +88,17 @@ export const PendingDebtBanner: React.FC<PendingDebtBannerProps> = ({
       {outgoingPending.map(debt => (
         <div
           key={debt.id}
-          className="bg-bg-card border border-border-subtle rounded-lg px-3 py-2 flex items-center justify-between gap-2 text-xs"
+          className="bg-[#0E1218] border border-white/[0.08] rounded-2xl px-3.5 py-2.5 flex items-center justify-between gap-2 text-xs shadow-md animate-in fade-in"
         >
-          <div className="text-text-muted min-w-0 truncate">
-            <span className="text-text-main font-medium">{debt.debtor_name}</span> için{' '}
-            <strong className="font-money text-text-main">{formatMoney(debt.initial_amount)}</strong> onay bekliyor
+          <div className="text-neutral-400 min-w-0 truncate">
+            <span className="text-white font-semibold">{debt.debtor_name}</span> için{' '}
+            <strong className="font-mono text-emerald-400 font-bold">{formatMoney(debt.initial_amount)}</strong> onay bekliyor
           </div>
           <button
             type="button"
             disabled={processingId === debt.id}
             onClick={() => handleAction(debt.id, 'reject')}
-            className="text-[11px] text-text-subtle hover:text-money-neg shrink-0"
+            className="text-xs text-neutral-400 hover:text-rose-400 font-semibold shrink-0 cursor-pointer transition-colors px-2 py-1 rounded-lg hover:bg-white/[0.04]"
           >
             İptal
           </button>
