@@ -130,7 +130,7 @@ const mock = {
 console.log('--- BAŞLANGIÇ: MONOPOLY İSTANBUL TEST SENARYOLARI ---');
 
 // Senaryo 1: Oda Oluşturma
-const { room, player: ahmet } = mock.createRoomWithBanker('IST-1907', 'Ahmet', 'sess_ahmet');
+const { room, player: ahmet } = mock.createRoomWithBanker('WID-19071', 'Ahmet', 'sess_ahmet');
 console.log('✓ Senaryo 1: Oda başarıyla oluşturuldu -> Kod:', room.code);
 
 // Senaryo 2: İlk oyuncuya 1.500 ₺ tanımlanması
@@ -139,7 +139,7 @@ assert.strictEqual(ahmet.is_banker, true, 'Ahmet bankacı olmalı');
 console.log('✓ Senaryo 2: İlk oyuncu 1.500 ₺ ve Bankacı olarak tanımlandı.');
 
 // Senaryo 3: İkinci oyuncunun katılması ve 1.500 ₺ alması
-const { player: mehmet } = mock.joinRoom('IST-1907', 'Mehmet', 'sess_mehmet');
+const { player: mehmet } = mock.joinRoom('WID-19071', 'Mehmet', 'sess_mehmet');
 assert.strictEqual(mehmet.balance, 1500, 'Mehmet bakiyesi 1.500 ₺ olmalı');
 assert.strictEqual(mehmet.is_banker, false, 'Mehmet normal oyuncu olmalı');
 console.log('✓ Senaryo 3: İkinci oyuncu (Mehmet) katıldı ve 1.500 ₺ aldı.');
@@ -200,7 +200,7 @@ console.log('✓ Senaryo 10: Bankacı düzeltmesi yapıldı ve denetim geçmişi
 const reloadedState = loadData();
 assert.strictEqual(reloadedState.players[ahmet.id].balance, 1400);
 assert.strictEqual(reloadedState.players[mehmet.id].balance, 1800);
-assert.strictEqual(reloadedState.rooms[room.id].code, 'IST-1907');
+assert.strictEqual(reloadedState.rooms[room.id].code, 'WID-19071');
 console.log('✓ Senaryo 11: Sayfa yenilendiğinde verilerin ve oturumun korunduğu doğrulandı.');
 
 console.log('\n--- TÜM TEST SENARYOLARI (1-11) BAŞARIYLA GEÇTİ! ---');

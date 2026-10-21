@@ -52,13 +52,11 @@ export function formatTime(isoString: string): string {
 }
 
 /**
- * Generates a clean, readable short room code (e.g. IST-7492 or MONO-3821)
+ * Generates a clean, readable short room code with fixed WID- prefix and digits: e.g. WID-48291
  */
 export function generateRoomCode(): string {
-  const prefixes = ['IST', 'MONO', 'KENT', 'BOGAZ', 'PERA', 'MODA'];
-  const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
-  const randomNum = Math.floor(1000 + Math.random() * 9000);
-  return `${prefix}-${randomNum}`;
+  const randomDigits = Math.floor(10000 + Math.random() * 90000);
+  return `WID-${randomDigits}`;
 }
 
 /**
