@@ -1,7 +1,13 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
-import { mockStorage } from './mockStorage';
 import { Room, Player, Debt, Transaction, RoomState } from '../types';
 import { generateRoomCode, getOrCreateSessionToken } from '../utils/formatters';
+
+// Legacy mockStorage temizliği - tüm veri %100 Supabase'te tutulur
+if (typeof window !== 'undefined') {
+  try {
+    localStorage.removeItem('monopoly_istanbul_data_v1');
+  } catch {}
+}
 
 export const dataService = {
   isLiveSupabase(): boolean {
@@ -12,71 +18,70 @@ export const dataService = {
     const sessionToken = getOrCreateSessionToken();
     const roomCode = generateRoomCode();
 
-    if (isSupabaseConfigured() && supabase) {
-      const { data, error } = await supabase.rpc('create_room_with_banker', {
-        p_room_code: roomCode,
-        p_player_name: playerName.trim(),
-        p_session_token: sessionToken,
-      });
-
-      if (error) {
-        throw new Error(error.message || 'Oda oluşturulamadı.');
-      }
-
-      return {
-        room: data.room,
-        player: data.player,
-      };
+    if (!isSupabaseConfigured() || !supabase) {
+      throw new Error('Supabase veritabanı bağlantısı bulunamadı.');
     }
 
-    // Local / Mock fallback
-    return mockStorage.createRoomWithBanker(roomCode, playerName, sessionToken);
+    const { data, error } = await supabase.rpc('create_room_with_banker', {
+      p_room_code: roomCode,
+      p_player_name: playerName.trim(),
+      p_session_token: sessionToken,
+    });
+
+    if (error) {
+      throw new Error(error.message || 'Oda oluşturulamadı.');
+    }
+
+    return {
+      room: data.room,
+      player: data.player,
+    };
   },
 
   async joinRoom(roomCode: string, playerName: string): Promise<{ room: Room; player: Player }> {
     const sessionToken = getOrCreateSessionToken();
 
-    if (isSupabaseConfigured() && supabase) {
-      const { data, error } = await supabase.rpc('join_room_player', {
-        p_room_code: roomCode.trim().toUpperCase(),
-        p_player_name: playerName.trim(),
-        p_session_token: sessionToken,
-      });
-
-      if (error) {
-        throw new Error(error.message || 'Odaya katılınamadı.');
-      }
-
-      return {
-        room: data.room,
-        player: data.player,
-      };
+    if (!isSupabaseConfigured() || !supabase) {
+      throw new Error('Supabase veritabanı bağlantısı bulunamadı.');
     }
 
-    return mockStorage.joinRoom(roomCode, playerName, sessionToken);
+    const { data, error } = await supabase.rpc('join_room_player', {
+      p_room_code: roomCode.trim().toUpperCase(),
+      p_player_name: playerName.trim(),
+      p_session_token: sessionToken,
+    });
+
+    if (error) {
+      throw new Error(error.message || 'Odaya katılınamadı.');
+    }
+
+    return {
+      room: data.room,
+      player: data.player,
+    };
   },
 
   async reconnectWithPin(roomCode: string, pin: string): Promise<{ room: Room; player: Player }> {
     const sessionToken = getOrCreateSessionToken();
 
-    if (isSupabaseConfigured() && supabase) {
-      const { data, error } = await supabase.rpc('reconnect_player_with_pin', {
-        p_room_code: roomCode.trim().toUpperCase(),
-        p_pin: pin.trim(),
-        p_session_token: sessionToken,
-      });
-
-      if (error) {
-        throw new Error(error.message || 'Kurtarma kodu ile geri bağlanılamadı.');
-      }
-
-      return {
-        room: data.room,
-        player: data.player,
-      };
+    if (!isSupabaseConfigured() || !supabase) {
+      throw new Error('Supabase veritabanı bağlantısı bulunamadı.');
     }
 
-    return mockStorage.reconnectWithPin(roomCode, pin, sessionToken);
+    const { data, error } = await supabase.rpc('reconnect_player_with_pin', {
+      p_room_code: roomCode.trim().toUpperCase(),
+      p_pin: pin.trim(),
+      p_session_token: sessionToken,
+    });
+
+    if (error) {
+      throw new Error(error.message || 'Kurtarma kodu ile geri bağlanılamadı.');
+    }
+
+    return {
+      room: data.room,
+      player: data.player,
+    };
   },
 
   async getRoomState(roomId: string): Promise<RoomState | null> {
@@ -154,7 +159,7 @@ export const dataService = {
       };
     }
 
-    return mockStorage.getRoomState(roomId, sessionToken);
+    return null;
   },
 
   subscribeToRoom(roomId: string, onChange: () => void): () => void {
@@ -200,7 +205,7 @@ export const dataService = {
       };
     }
 
-    return mockStorage.subscribe(onChange);
+    return () => {};
   },
 
   ensureConnection(): void {
@@ -218,176 +223,169 @@ export const dataService = {
   async transferMoney(roomId: string, fromId: string, toId: string, amount: number, description?: string): Promise<void> {
     const sessionToken = getOrCreateSessionToken();
 
-    if (isSupabaseConfigured() && supabase) {
-      const { error } = await supabase.rpc('transfer_money', {
-        p_room_id: roomId,
-        p_session_token: sessionToken,
-        p_from_player_id: fromId,
-        p_to_player_id: toId,
-        p_amount: amount,
-        p_description: description || null,
-      });
-
-      if (error) {
-        throw new Error(error.message || 'Transfer başarısız.');
-      }
-      return;
+    if (!isSupabaseConfigured() || !supabase) {
+      throw new Error('Supabase bağlantısı bulunamadı.');
     }
 
-    mockStorage.transferMoney(roomId, fromId, toId, amount, description);
+    const { error } = await supabase.rpc('transfer_money', {
+      p_room_id: roomId,
+      p_session_token: sessionToken,
+      p_from_player_id: fromId,
+      p_to_player_id: toId,
+      p_amount: amount,
+      p_description: description || null,
+    });
+
+    if (error) {
+      throw new Error(error.message || 'Transfer başarısız.');
+    }
   },
 
   async lendDebt(roomId: string, creditorId: string, debtorId: string, amount: number, description?: string): Promise<void> {
     const sessionToken = getOrCreateSessionToken();
 
-    if (isSupabaseConfigured() && supabase) {
-      const { error } = await supabase.rpc('lend_debt', {
-        p_room_id: roomId,
-        p_session_token: sessionToken,
-        p_creditor_id: creditorId,
-        p_debtor_id: debtorId,
-        p_amount: amount,
-        p_description: description || null,
-      });
-
-      if (error) {
-        throw new Error(error.message || 'Borç verme başarısız.');
-      }
-      return;
+    if (!isSupabaseConfigured() || !supabase) {
+      throw new Error('Supabase bağlantısı bulunamadı.');
     }
 
-    mockStorage.lendDebt(roomId, creditorId, debtorId, amount, description);
+    const { error } = await supabase.rpc('lend_debt', {
+      p_room_id: roomId,
+      p_session_token: sessionToken,
+      p_creditor_id: creditorId,
+      p_debtor_id: debtorId,
+      p_amount: amount,
+      p_description: description || null,
+    });
+
+    if (error) {
+      throw new Error(error.message || 'Borç verme başarısız.');
+    }
   },
 
   async approveDebt(roomId: string, debtId: string): Promise<void> {
     const sessionToken = getOrCreateSessionToken();
 
-    if (isSupabaseConfigured() && supabase) {
-      const { error } = await supabase.rpc('approve_debt', {
-        p_room_id: roomId,
-        p_session_token: sessionToken,
-        p_debt_id: debtId,
-      });
-
-      if (error) {
-        throw new Error(error.message || 'Borç onaylama başarısız.');
-      }
-      return;
+    if (!isSupabaseConfigured() || !supabase) {
+      throw new Error('Supabase bağlantısı bulunamadı.');
     }
 
-    mockStorage.approveDebt(roomId, debtId);
+    const { error } = await supabase.rpc('approve_debt', {
+      p_room_id: roomId,
+      p_session_token: sessionToken,
+      p_debt_id: debtId,
+    });
+
+    if (error) {
+      throw new Error(error.message || 'Borç onaylama başarısız.');
+    }
   },
 
   async rejectDebt(roomId: string, debtId: string): Promise<void> {
     const sessionToken = getOrCreateSessionToken();
 
-    if (isSupabaseConfigured() && supabase) {
-      const { error } = await supabase.rpc('reject_debt', {
-        p_room_id: roomId,
-        p_session_token: sessionToken,
-        p_debt_id: debtId,
-      });
-
-      if (error) {
-        throw new Error(error.message || 'Borç iptal/reddetme başarısız.');
-      }
-      return;
+    if (!isSupabaseConfigured() || !supabase) {
+      throw new Error('Supabase bağlantısı bulunamadı.');
     }
 
-    mockStorage.rejectDebt(roomId, debtId);
+    const { error } = await supabase.rpc('reject_debt', {
+      p_room_id: roomId,
+      p_session_token: sessionToken,
+      p_debt_id: debtId,
+    });
+
+    if (error) {
+      throw new Error(error.message || 'Borç iptal/reddetme başarısız.');
+    }
   },
 
   async payDebt(roomId: string, debtId: string, amount: number): Promise<void> {
     const sessionToken = getOrCreateSessionToken();
 
-    if (isSupabaseConfigured() && supabase) {
-      const { error } = await supabase.rpc('pay_debt', {
-        p_room_id: roomId,
-        p_session_token: sessionToken,
-        p_debt_id: debtId,
-        p_amount: amount,
-      });
-
-      if (error) {
-        throw new Error(error.message || 'Borç ödemesi başarısız.');
-      }
-      return;
+    if (!isSupabaseConfigured() || !supabase) {
+      throw new Error('Supabase bağlantısı bulunamadı.');
     }
 
-    mockStorage.payDebt(roomId, debtId, amount);
+    const { error } = await supabase.rpc('pay_debt', {
+      p_room_id: roomId,
+      p_session_token: sessionToken,
+      p_debt_id: debtId,
+      p_amount: amount,
+    });
+
+    if (error) {
+      throw new Error(error.message || 'Borç ödemesi başarısız.');
+    }
   },
 
   async settleDebt(roomId: string, debtId: string, agreedPayment: number): Promise<void> {
     const sessionToken = getOrCreateSessionToken();
 
-    if (isSupabaseConfigured() && supabase) {
-      const { error } = await supabase.rpc('settle_debt', {
-        p_room_id: roomId,
-        p_session_token: sessionToken,
-        p_debt_id: debtId,
-        p_agreed_payment: agreedPayment,
-      });
-
-      if (error) {
-        throw new Error(error.message || 'Anlaşmalı kapatma başarısız.');
-      }
-      return;
+    if (!isSupabaseConfigured() || !supabase) {
+      throw new Error('Supabase bağlantısı bulunamadı.');
     }
 
-    mockStorage.settleDebt(roomId, debtId, agreedPayment);
+    const { error } = await supabase.rpc('settle_debt', {
+      p_room_id: roomId,
+      p_session_token: sessionToken,
+      p_debt_id: debtId,
+      p_agreed_payment: agreedPayment,
+    });
+
+    if (error) {
+      throw new Error(error.message || 'Anlaşmalı kapatma başarısız.');
+    }
   },
 
   async bankerAdjust(roomId: string, playerId: string, amountDelta: number, description: string): Promise<void> {
     const sessionToken = getOrCreateSessionToken();
 
-    if (isSupabaseConfigured() && supabase) {
-      const { error } = await supabase.rpc('banker_adjust_balance', {
-        p_room_id: roomId,
-        p_session_token: sessionToken,
-        p_player_id: playerId,
-        p_amount_delta: amountDelta,
-        p_description: description,
-      });
-
-      if (error) {
-        throw new Error(error.message || 'Bakiye düzeltmesi başarısız.');
-      }
-      return;
+    if (!isSupabaseConfigured() || !supabase) {
+      throw new Error('Supabase bağlantısı bulunamadı.');
     }
 
-    mockStorage.bankerAdjust(roomId, playerId, amountDelta, description);
+    const { error } = await supabase.rpc('banker_adjust_balance', {
+      p_room_id: roomId,
+      p_session_token: sessionToken,
+      p_player_id: playerId,
+      p_amount_delta: amountDelta,
+      p_description: description,
+    });
+
+    if (error) {
+      throw new Error(error.message || 'Bakiye düzeltmesi başarısız.');
+    }
   },
 
   async getDebtDetails(debtId: string) {
-    if (isSupabaseConfigured() && supabase) {
-      const { data: debt } = await supabase.from('debts').select('*').eq('id', debtId).single();
-      const { data: payments } = await supabase
-        .from('debt_payments')
-        .select('*')
-        .eq('debt_id', debtId)
-        .order('created_at', { ascending: false });
-      const { data: settlements } = await supabase
-        .from('debt_settlements')
-        .select('*')
-        .eq('debt_id', debtId)
-        .limit(1);
-
-      if (!debt) return null;
-
-      const { data: players } = await supabase.from('players').select('id, name');
-      const playerMap = new Map((players || []).map(p => [p.id, p.name]));
-
-      return {
-        debt: {
-          ...debt,
-          creditor_name: playerMap.get(debt.creditor_id) || 'Bilinmeyen',
-          debtor_name: playerMap.get(debt.debtor_id) || 'Bilinmeyen',
-        },
-        payments: payments || [],
-        settlement: settlements && settlements.length > 0 ? settlements[0] : null,
-      };
+    if (!isSupabaseConfigured() || !supabase) {
+      return null;
     }
 
-    return mockStorage.getDebtDetails(debtId);
+    const { data: debt } = await supabase.from('debts').select('*').eq('id', debtId).single();
+    const { data: payments } = await supabase
+      .from('debt_payments')
+      .select('*')
+      .eq('debt_id', debtId)
+      .order('created_at', { ascending: false });
+    const { data: settlements } = await supabase
+      .from('debt_settlements')
+      .select('*')
+      .eq('debt_id', debtId)
+      .limit(1);
+
+    if (!debt) return null;
+
+    const { data: players } = await supabase.from('players').select('id, name');
+    const playerMap = new Map((players || []).map(p => [p.id, p.name]));
+
+    return {
+      debt: {
+        ...debt,
+        creditor_name: playerMap.get(debt.creditor_id) || 'Bilinmeyen',
+        debtor_name: playerMap.get(debt.debtor_id) || 'Bilinmeyen',
+      },
+      payments: payments || [],
+      settlement: settlements && settlements.length > 0 ? settlements[0] : null,
+    };
   }
 };
