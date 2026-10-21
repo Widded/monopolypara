@@ -42,8 +42,8 @@ export const DebtDetailModal: React.FC<DebtDetailModalProps> = ({
   const isClosed = debt.status === 'settled' || debt.remaining_amount === 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="bg-bg-card border border-border-subtle w-full max-w-md rounded-t-3xl sm:rounded-2xl p-5 shadow-2xl max-h-[92vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
+      <div className="bg-bg-card border border-border-subtle w-full max-w-md rounded-2xl p-5 shadow-2xl max-h-[90dvh] overflow-y-auto my-auto animate-in zoom-in-95 duration-150">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-border-subtle mb-4">
           <div className="flex items-center gap-2">

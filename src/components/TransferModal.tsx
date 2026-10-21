@@ -78,8 +78,8 @@ export const TransferModal: React.FC<TransferModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-100">
-      <div className="bg-bg-card border border-border-subtle w-full max-w-sm rounded-t-2xl sm:rounded-2xl p-4 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-100 overflow-y-auto">
+      <div className="bg-bg-card border border-border-subtle w-full max-w-sm rounded-2xl p-4 shadow-2xl max-h-[92dvh] overflow-y-auto my-auto animate-in zoom-in-95 duration-150">
         {/* Header */}
         <div className="flex items-center justify-between pb-2.5 border-b border-border-subtle mb-3">
           <div className="flex items-center gap-2">
