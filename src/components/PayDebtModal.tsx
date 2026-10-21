@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, CheckSquare, AlertTriangle, Loader2, Handshake } from 'lucide-react';
 import { Debt, Player } from '../types';
 import { formatMoney } from '../utils/formatters';
+import { Keypad } from './Keypad';
 
 interface PayDebtModalProps {
   isOpen: boolean;
@@ -107,8 +108,8 @@ export const PayDebtModal: React.FC<PayDebtModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-100">
-      <div className="bg-bg-card border border-border-subtle w-full max-w-sm rounded-t-2xl sm:rounded-2xl p-4 shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-100">
+      <div className="bg-bg-card border border-border-subtle w-full max-w-sm rounded-t-2xl sm:rounded-2xl p-4 shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between pb-2.5 border-b border-border-subtle mb-3">
           <div className="flex items-center gap-2">
@@ -125,7 +126,7 @@ export const PayDebtModal: React.FC<PayDebtModalProps> = ({
         </div>
 
         {error && (
-          <div className="mb-3 p-2 rounded-lg bg-money-neg/10 border border-money-neg/30 flex items-center gap-2 text-xs text-money-neg">
+          <div className="mb-2.5 p-2 rounded-lg bg-money-neg/10 border border-money-neg/30 flex items-center gap-2 text-xs text-money-neg">
             <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
             <span className="truncate">{error}</span>
           </div>
@@ -136,13 +137,13 @@ export const PayDebtModal: React.FC<PayDebtModalProps> = ({
             Şu anda açık bir borç kaydı yok.
           </div>
         ) : (
-          <form onSubmit={handleExecute} className="space-y-3">
-            {/* Debt Picker (compact cards) */}
+          <form onSubmit={handleExecute} className="space-y-2.5">
+            {/* Debt Picker */}
             <div>
               <div className="text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-1">
                 Açık Borç
               </div>
-              <div className="space-y-1.5 max-h-28 overflow-y-auto pr-0.5">
+              <div className="space-y-1 max-h-24 overflow-y-auto pr-0.5">
                 {activeDebts.map(d => (
                   <button
                     key={d.id}
@@ -172,48 +173,42 @@ export const PayDebtModal: React.FC<PayDebtModalProps> = ({
 
             {currentDebt && (
               <>
-                {/* Amount Input with quick presets */}
-                <div>
-                  <div className="flex items-center justify-between text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-1">
-                    <span>Ödenecek Tutar</span>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={handleSelectHalf}
-                        className="text-[10px] text-accent hover:underline font-money"
-                      >
-                        Yarısı
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleSelectFull}
-                        className="text-[10px] text-accent hover:underline font-money"
-                      >
-                        Tamamı
-                      </button>
-                    </div>
+                {/* Amount Display with presets */}
+                <div className="bg-bg-surface border border-border-subtle rounded-xl p-2.5 flex items-center justify-between">
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleSelectHalf}
+                      className="px-2 py-1 rounded bg-bg-card border border-border-subtle text-[10px] text-accent font-semibold hover:border-accent"
+                    >
+                      Yarısı
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSelectFull}
+                      className="px-2 py-1 rounded bg-bg-card border border-border-subtle text-[10px] text-accent font-semibold hover:border-accent"
+                    >
+                      Tamamı
+                    </button>
                   </div>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      min="1"
-                      max={currentDebt.remaining_amount}
-                      step="1"
-                      value={amountStr}
-                      onChange={e => setAmountStr(e.target.value)}
-                      placeholder="0"
-                      className="input-field py-2.5 text-lg font-money font-bold pr-8"
-                      autoFocus
-                    />
-                    <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted font-bold text-sm">
-                      ₺
-                    </span>
-                  </div>
+                  <span className="text-2xl font-money font-bold text-accent tracking-tight">
+                    {formatMoney(amount)}
+                  </span>
                 </div>
 
-                {/* Settlement toggle (Anlaşmalı kapatma) */}
-                <label className="flex items-center gap-2 p-2 rounded-lg bg-bg-surface border border-border-subtle cursor-pointer select-none">
+                {/* Keypad */}
+                <Keypad
+                  value={amountStr}
+                  onChange={val => {
+                    setAmountStr(val);
+                    setError(null);
+                  }}
+                  quickPresets={[50, 100, 200, 300]}
+                  max={currentDebt.remaining_amount}
+                />
+
+                {/* Settlement toggle */}
+                <label className="flex items-center gap-2 p-1.5 rounded-lg bg-bg-surface border border-border-subtle cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={isSettlement}

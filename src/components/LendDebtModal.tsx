@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, HandCoins, AlertTriangle, Loader2 } from 'lucide-react';
 import { Player } from '../types';
 import { formatMoney } from '../utils/formatters';
+import { Keypad } from './Keypad';
 
 interface LendDebtModalProps {
   isOpen: boolean;
@@ -44,12 +45,6 @@ export const LendDebtModal: React.FC<LendDebtModalProps> = ({
   const amount = parseFloat(amountStr) || 0;
   const debtor = players.find(p => p.id === debtorId);
 
-  const handleQuickAdd = (delta: number) => {
-    const current = parseFloat(amountStr) || 0;
-    setAmountStr((current + delta).toString());
-    setError(null);
-  };
-
   const handleExecute = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -79,8 +74,8 @@ export const LendDebtModal: React.FC<LendDebtModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-100">
-      <div className="bg-bg-card border border-border-subtle w-full max-w-sm rounded-t-2xl sm:rounded-2xl p-4 shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-100">
+      <div className="bg-bg-card border border-border-subtle w-full max-w-sm rounded-t-2xl sm:rounded-2xl p-4 shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between pb-2.5 border-b border-border-subtle mb-3">
           <div className="flex items-center gap-2">
@@ -97,7 +92,7 @@ export const LendDebtModal: React.FC<LendDebtModalProps> = ({
         </div>
 
         {error && (
-          <div className="mb-3 p-2 rounded-lg bg-money-neg/10 border border-money-neg/30 flex items-center gap-2 text-xs text-money-neg">
+          <div className="mb-2.5 p-2 rounded-lg bg-money-neg/10 border border-money-neg/30 flex items-center gap-2 text-xs text-money-neg">
             <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
             <span className="truncate">{error}</span>
           </div>
@@ -123,7 +118,7 @@ export const LendDebtModal: React.FC<LendDebtModalProps> = ({
                       setDebtorId(p.id);
                       setError(null);
                     }}
-                    className={`py-2 px-2.5 rounded-lg border text-left text-xs transition-all ${
+                    className={`py-1.5 px-2.5 rounded-lg border text-left text-xs transition-all ${
                       debtorId === p.id
                         ? 'border-money-pos bg-money-pos/15 text-text-main font-semibold'
                         : 'border-border-subtle bg-bg-surface text-text-muted hover:text-text-main'
@@ -137,53 +132,30 @@ export const LendDebtModal: React.FC<LendDebtModalProps> = ({
             )}
           </div>
 
-          {/* Amount Input */}
-          <div>
-            <div className="flex items-center justify-between text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-1">
-              <span>Borç Tutarı</span>
-              <span className="normal-case text-text-muted">Bakiyeniz: {formatMoney(currentPlayer.balance)}</span>
-            </div>
-            <div className="relative">
-              <input
-                type="number"
-                inputMode="numeric"
-                min="1"
-                step="1"
-                value={amountStr}
-                onChange={e => setAmountStr(e.target.value)}
-                placeholder="0"
-                className="input-field py-2.5 text-lg font-money font-bold pr-8"
-                autoFocus
-              />
-              <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted font-bold text-sm">
-                ₺
-              </span>
-            </div>
-
-            {/* Quick chips */}
-            <div className="grid grid-cols-4 gap-1.5 mt-2">
-              {[50, 100, 200, 300].map(val => (
-                <button
-                  key={val}
-                  type="button"
-                  onClick={() => handleQuickAdd(val)}
-                  className="py-1 rounded-md bg-bg-surface hover:bg-[#252b36] border border-border-subtle text-[11px] font-money text-text-muted hover:text-text-main"
-                >
-                  +{val}
-                </button>
-              ))}
-            </div>
+          {/* Amount Display */}
+          <div className="bg-bg-surface border border-border-subtle rounded-xl p-2.5 flex items-center justify-between">
+            <span className="text-[11px] text-text-muted font-medium">Borç Tutarı</span>
+            <span className="text-2xl font-money font-bold text-money-pos tracking-tight">
+              {formatMoney(amount)}
+            </span>
           </div>
 
-          <p className="text-[11px] text-text-muted text-center pt-0.5">
-            {debtor ? `${debtor.name}'e nakit aktarılır ve borç kaydı açılır.` : 'Nakit borç olarak aktarılır.'}
-          </p>
+          {/* Custom Keypad */}
+          <Keypad
+            value={amountStr}
+            onChange={val => {
+              setAmountStr(val);
+              setError(null);
+            }}
+            quickPresets={[50, 100, 200, 300]}
+            max={currentPlayer.balance}
+          />
 
-          {/* Single Action Button */}
+          {/* Action Button */}
           <button
             type="submit"
             disabled={loading || !debtorId || amount <= 0}
-            className="btn-primary w-full py-2.5 text-xs font-bold"
+            className="btn-primary w-full py-3 text-xs font-bold"
           >
             {loading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
