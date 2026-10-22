@@ -570,15 +570,7 @@ export const App: React.FC = () => {
       />
 
       {/* Main Content Area - Scrollable viewport starting cleanly at top */}
-      <main className="flex-1 overflow-y-auto overscroll-contain max-w-md w-full mx-auto px-4 pt-3 pb-28 space-y-3.5">
-        {/* Compact Summary */}
-        <SummaryCard
-          playerCount={activePlayers.length}
-          totalCash={totalCash}
-          lastTransaction={transactions[0]}
-          onOpenHistory={() => setIsHistoryOpen(true)}
-        />
-
+      <main className="flex-1 overflow-y-auto overscroll-contain max-w-md w-full mx-auto px-4 pt-3 pb-24 space-y-3">
         {/* Pending Debt Approvals */}
         <PendingDebtBanner
           debts={debts}
@@ -591,9 +583,10 @@ export const App: React.FC = () => {
         <PlayerList
           players={players}
           currentPlayer={currentPlayer}
+          totalCash={totalCash}
+          lastTransaction={transactions[0]}
+          onOpenHistory={() => setIsHistoryOpen(true)}
           onSendMoney={handleQuickSendMoney}
-          onPayBank={handlePayBank}
-          onLendDebt={handleQuickLend}
           onSelectPlayer={(p) => setDetailPlayer(p)}
           onCopyRoomCode={handleCopyRoomCode}
         />

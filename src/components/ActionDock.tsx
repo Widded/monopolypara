@@ -17,63 +17,58 @@ export const ActionDock: React.FC<ActionDockProps> = ({
   activeDebtsCount,
 }) => {
   return (
-    <div className="fixed bottom-3 left-0 right-0 z-40 px-3.5 pointer-events-none pb-[env(safe-area-inset-bottom)]">
-      <nav className="max-w-md mx-auto pointer-events-auto bg-[#0A0D14]/92 backdrop-blur-2xl border border-white/[0.1] rounded-3xl p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.85)] flex items-center justify-between">
-        {/* 1. Para Gönder (Primary Floating Action) */}
+    <div className="fixed bottom-3 left-0 right-0 z-40 px-4 pointer-events-none pb-[env(safe-area-inset-bottom)]">
+      <nav className="max-w-xs mx-auto pointer-events-auto bg-[#0E1218]/95 backdrop-blur-xl border border-white/[0.08] rounded-full px-2 py-1.5 shadow-2xl shadow-black/90 flex items-center justify-around">
+        {/* 1. Para Gönder */}
         <button
           type="button"
           onClick={onOpenTransfer}
-          className="flex-1 flex flex-col items-center justify-center py-2 px-1 text-emerald-400 hover:text-emerald-300 transition-all cursor-pointer group active:scale-95 select-none"
+          className="flex flex-col items-center justify-center p-2 text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer active:scale-90 select-none"
+          title="Para Gönder"
         >
-          <Navigation className="w-5 h-5 mb-1 stroke-[2.2] rotate-45 group-hover:scale-110 transition-transform" />
-          <span className="text-[11px] font-bold tracking-tight">Para Gönder</span>
+          <Navigation className="w-5 h-5 rotate-45 stroke-[2.2]" />
+          <span className="text-[10px] font-bold mt-0.5">Gönder</span>
         </button>
-
-        {/* Dikey İnce Bölücü */}
-        <div className="h-6 w-[1px] bg-white/[0.08] shrink-0" />
 
         {/* 2. Borç Ver */}
         <button
           type="button"
           onClick={onOpenLendDebt}
-          className="flex-1 flex flex-col items-center justify-center py-2 px-1 text-neutral-400 hover:text-white transition-all cursor-pointer group active:scale-95 select-none"
+          className="flex flex-col items-center justify-center p-2 text-neutral-400 hover:text-white transition-colors cursor-pointer active:scale-90 select-none"
+          title="Borç Ver"
         >
-          <Users className="w-5 h-5 mb-1 stroke-[1.8] group-hover:scale-110 transition-transform" />
-          <span className="text-[11px] font-medium tracking-tight">Borç Ver</span>
+          <Users className="w-5 h-5 stroke-[1.8]" />
+          <span className="text-[10px] font-medium mt-0.5">Borç Ver</span>
         </button>
-
-        {/* Dikey İnce Bölücü */}
-        <div className="h-6 w-[1px] bg-white/[0.08] shrink-0" />
 
         {/* 3. Borç Öde */}
         <button
           type="button"
           onClick={onOpenPayDebt}
-          className="flex-1 flex flex-col items-center justify-center py-2 px-1 text-neutral-400 hover:text-white transition-all cursor-pointer group active:scale-95 select-none relative"
+          className="flex flex-col items-center justify-center p-2 text-neutral-400 hover:text-white transition-colors cursor-pointer active:scale-90 select-none relative"
+          title="Borç Öde"
         >
           <div className="relative">
-            <CheckSquare className="w-5 h-5 mb-1 stroke-[1.8] group-hover:scale-110 transition-transform" />
+            <CheckSquare className="w-5 h-5 stroke-[1.8]" />
             {activeDebtsCount > 0 && (
               <span
-                className="w-2 h-2 rounded-full bg-rose-500 absolute -top-0.5 -right-0.5 ring-2 ring-[#0A0D14] animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.8)]"
+                className="w-2 h-2 rounded-full bg-rose-500 absolute -top-0.5 -right-0.5 animate-pulse"
                 title={`${activeDebtsCount} açık borç var`}
               />
             )}
           </div>
-          <span className="text-[11px] font-medium tracking-tight">Borç Öde</span>
+          <span className="text-[10px] font-medium mt-0.5">Borç Öde</span>
         </button>
-
-        {/* Dikey İnce Bölücü */}
-        <div className="h-6 w-[1px] bg-white/[0.08] shrink-0" />
 
         {/* 4. Geçmiş */}
         <button
           type="button"
           onClick={onOpenHistory}
-          className="flex-1 flex flex-col items-center justify-center py-2 px-1 text-neutral-400 hover:text-white transition-all cursor-pointer group active:scale-95 select-none"
+          className="flex flex-col items-center justify-center p-2 text-neutral-400 hover:text-white transition-colors cursor-pointer active:scale-90 select-none"
+          title="İşlem Geçmişi"
         >
-          <Clock className="w-5 h-5 mb-1 stroke-[1.8] group-hover:scale-110 transition-transform" />
-          <span className="text-[11px] font-medium tracking-tight">Geçmiş</span>
+          <Clock className="w-5 h-5 stroke-[1.8]" />
+          <span className="text-[10px] font-medium mt-0.5">Geçmiş</span>
         </button>
       </nav>
     </div>
