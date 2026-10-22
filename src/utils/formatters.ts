@@ -83,22 +83,63 @@ export function generateRecoveryPin(): string {
 }
 
 /**
- * Generates a secure client session token stored in localStorage
+ * Generates or retrieves a secure client session token, supporting per-player and per-room isolation
  */
-export function getOrCreateSessionToken(): string {
+export function getOrCreateSessionToken(playerId?: string, roomId?: string): string {
+  if (typeof window === 'undefined') return 'sess_default';
+
+  // 1. Oyuncuya özel token varsa öncelikli olarak onu getir
+  if (playerId) {
+    const playerToken = localStorage.getItem(`monopoly_token_p_${playerId}`);
+    if (playerToken) return playerToken;
+  }
+
+  // 2. Odaya özel token varsa onu getir
+  if (roomId) {
+    const roomToken = localStorage.getItem(`monopoly_token_r_${roomId}`);
+    if (roomToken) return roomToken;
+  }
+
+  // 3. Genel oturum tokeni
   const storageKey = 'monopoly_session_token';
   let token = localStorage.getItem(storageKey);
   if (!token) {
     token = 'sess_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now().toString(36);
-    localStorage.setItem(storageKey, token);
+    try {
+      localStorage.setItem(storageKey, token);
+    } catch {}
   }
+
+  if (playerId) {
+    try {
+      localStorage.setItem(`monopoly_token_p_${playerId}`, token);
+    } catch {}
+  }
+  if (roomId) {
+    try {
+      localStorage.setItem(`monopoly_token_r_${roomId}`, token);
+    } catch {}
+  }
+
   return token;
 }
 
+export function savePlayerSessionToken(playerId: string, token: string, roomId?: string): void {
+  if (typeof window === 'undefined' || !token) return;
+  try {
+    localStorage.setItem('monopoly_session_token', token);
+    if (playerId) localStorage.setItem(`monopoly_token_p_${playerId}`, token);
+    if (roomId) localStorage.setItem(`monopoly_token_r_${roomId}`, token);
+  } catch {}
+}
+
 export function resetSessionToken(): string {
+  if (typeof window === 'undefined') return 'sess_new';
   const storageKey = 'monopoly_session_token';
   const token = 'sess_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now().toString(36);
-  localStorage.setItem(storageKey, token);
+  try {
+    localStorage.setItem(storageKey, token);
+  } catch {}
   return token;
 }
 

@@ -1,6 +1,6 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { Room, Player, Debt, Transaction, RoomState } from '../types';
-import { generateRoomCode, getOrCreateSessionToken } from '../utils/formatters';
+import { generateRoomCode, getOrCreateSessionToken, savePlayerSessionToken } from '../utils/formatters';
 
 // Legacy mockStorage temizliği - tüm veri %100 Supabase'te tutulur
 if (typeof window !== 'undefined') {
@@ -32,9 +32,13 @@ export const dataService = {
       throw new Error(error.message || 'Oda oluşturulamadı.');
     }
 
+    const room: Room = data.room;
+    const player: Player = data.player;
+    savePlayerSessionToken(player.id, player.session_token || sessionToken, room.id);
+
     return {
-      room: data.room,
-      player: data.player,
+      room,
+      player,
     };
   },
 
@@ -67,9 +71,13 @@ export const dataService = {
       throw new Error(error.message || 'Odaya katılınamadı.');
     }
 
+    const room: Room = data.room;
+    const player: Player = data.player;
+    savePlayerSessionToken(player.id, player.session_token || sessionToken, room.id);
+
     return {
-      room: data.room,
-      player: data.player,
+      room,
+      player,
     };
   },
 
@@ -92,9 +100,12 @@ export const dataService = {
     });
 
     if (!error && data?.room && data?.player) {
+      const room: Room = data.room;
+      const player: Player = data.player;
+      savePlayerSessionToken(player.id, player.session_token || sessionToken, room.id);
       return {
-        room: data.room,
-        player: data.player,
+        room,
+        player,
       };
     }
 
@@ -104,100 +115,90 @@ export const dataService = {
       if (cleanDigits) {
         roomQuery = roomQuery.or(`code.eq.WID-${cleanDigits},code.eq.${cleanDigits},code.eq.${roomCode.trim().toUpperCase()}`);
       } else {
-        roomQuery = roomQuery.eq('code', roomCode.trim().toUpperCase());
+        roomQuery = roomQuery.eq('code', normalizedCode);
       }
-      const { data: roomData, error: roomErr } = await roomQuery.maybeSingle();
+      const { data: targetRoom } = await roomQuery.single();
 
-      if (roomErr || !roomData) {
-        throw new Error('Oda bulunamadı. Lütfen oda kodunu kontrol edin.');
+      if (targetRoom) {
+        const { data: targetPlayer } = await supabase
+          .from('players')
+          .select('*')
+          .eq('room_id', targetRoom.id)
+          .or(`recovery_pin.eq.${cleanPin},recovery_pin.eq.${cleanPin.replace(/^0+/, '')}`)
+          .single();
+
+        if (targetPlayer) {
+          await supabase.from('players').update({ is_online: true, session_token: sessionToken }).eq('id', targetPlayer.id);
+          savePlayerSessionToken(targetPlayer.id, sessionToken, targetRoom.id);
+          return {
+            room: targetRoom,
+            player: {
+              ...targetPlayer,
+              session_token: sessionToken,
+              is_online: true,
+            },
+          };
+        }
       }
-
-      // Oyuncuyu PIN ile bul (hem 4 haneli LPAD hem de ham PIN ile kontrol et)
-      const { data: matchedPlayers, error: playerErr } = await supabase
-        .from('players')
-        .select('*')
-        .eq('room_id', roomData.id)
-        .or(`recovery_pin.eq.${cleanPin},recovery_pin.eq.${pin.trim()}`);
-
-      const matchedPlayer = matchedPlayers?.[0];
-
-      if (playerErr || !matchedPlayer) {
-        throw new Error(`Bu odada (${cleanPin}) PIN koduna sahip oyuncu bulunamadı. Lütfen odadaki arkadaşlarınıza kartınızdaki PIN kodunu sorun.`);
-      }
-
-      // Session token'ı bu oyuncuyla senkronize et ve online yap
-      await supabase
-        .from('players')
-        .update({
-          session_token: sessionToken,
-          is_online: true,
-          last_active_at: new Date().toISOString(),
-        })
-        .eq('id', matchedPlayer.id);
-
-      return {
-        room: roomData,
-        player: {
-          ...matchedPlayer,
-          session_token: sessionToken,
-          is_online: true,
-        },
-      };
-    } catch (fallbackErr: any) {
-      throw new Error(fallbackErr.message || error?.message || 'Kurtarma kodu ile geri bağlanılamadı.');
+    } catch (fallbackErr) {
+      console.warn('reconnect fallback error:', fallbackErr);
     }
+
+    if (error) {
+      throw new Error(error.message || 'Geri bağlanılamadı.');
+    }
+    throw new Error('Oyuncu bulunamadı. Lütfen oda kodunu ve PIN kodunuzu kontrol edin.');
   },
 
   async leaveRoom(roomId?: string, playerId?: string): Promise<void> {
-    const sessionToken = getOrCreateSessionToken();
-    if (isSupabaseConfigured() && supabase) {
-      try {
-        await supabase.rpc('leave_room_player', {
-          p_player_id: playerId || null,
-          p_room_id: roomId || null,
-          p_session_token: sessionToken,
-        });
-      } catch (e) {
-        console.warn('leave_room_player RPC call failed:', e);
-      }
+    const sessionToken = getOrCreateSessionToken(playerId, roomId);
+    if (!isSupabaseConfigured() || !supabase) return;
 
-      // Güvenlik yedeği: Doğrudan ID ile de kapatmayı dene
-      try {
-        if (playerId) {
-          await supabase.from('players').update({ is_online: false }).eq('id', playerId);
-        } else if (sessionToken) {
-          await supabase.from('players').update({ is_online: false }).eq('session_token', sessionToken);
-        }
-      } catch {}
+    try {
+      if (playerId) {
+        await supabase.rpc('leave_room_player', {
+          p_player_id: playerId,
+          p_session_token: sessionToken,
+          p_room_id: roomId || null,
+        });
+        await supabase.from('players').update({ is_online: false }).eq('id', playerId);
+      } else if (sessionToken) {
+        await supabase.rpc('leave_room_player', {
+          p_session_token: sessionToken,
+          p_room_id: roomId || null,
+        });
+        await supabase.from('players').update({ is_online: false }).eq('session_token', sessionToken);
+      }
+    } catch (err) {
+      console.warn('leaveRoom RPC failed, falling back:', err);
     }
   },
 
   async getRoomState(roomId: string): Promise<RoomState | null> {
-    const sessionToken = getOrCreateSessionToken();
+    const sessionToken = getOrCreateSessionToken(undefined, roomId);
 
-    if (isSupabaseConfigured() && supabase) {
-      // Odayı ID veya Kod ile bul
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(roomId);
-      let roomQuery = supabase.from('rooms').select('*');
-      if (isUuid) {
-        roomQuery = roomQuery.eq('id', roomId);
-      } else {
-        roomQuery = roomQuery.eq('code', roomId.trim().toUpperCase());
-      }
-      const roomRes = await roomQuery.maybeSingle();
+    if (!isSupabaseConfigured() || !supabase) {
+      throw new Error('Supabase bağlantısı bulunamadı.');
+    }
 
-      if (roomRes.error || !roomRes.data) return null;
+    const { data: room, error: roomError } = await supabase
+      .from('rooms')
+      .select('*')
+      .eq('id', roomId)
+      .single();
 
-      const room = roomRes.data;
-      const actualRoomId = room.id;
+    if (roomError || !room) {
+      return null;
+    }
 
-      // Parallel fetch for lightning-fast response (1 roundtrip instead of 4)
-      const [playersRes, debtsRes, txRes] = await Promise.all([
-        supabase.from('players').select('*').eq('room_id', actualRoomId).order('created_at', { ascending: true }),
-        supabase.from('debts').select('*').eq('room_id', actualRoomId).order('created_at', { ascending: false }),
-        supabase.from('transactions').select('*').eq('room_id', actualRoomId).order('created_at', { ascending: false }).limit(50),
-      ]);
+    // Fetch players, debts, and transactions in parallel for maximum performance
+    const [playersRes, debtsRes, txRes] = await Promise.all([
+      supabase.from('players').select('*').eq('room_id', roomId).order('created_at', { ascending: true }),
+      supabase.from('debts').select('*').eq('room_id', roomId).order('created_at', { ascending: false }),
+      supabase.from('transactions').select('*').eq('room_id', roomId).order('created_at', { ascending: false }).limit(60),
+    ]);
 
+    if (playersRes.data) {
       const playersList: Player[] = playersRes.data || [];
       const debtsList: Debt[] = debtsRes.data || [];
       const txList: Transaction[] = txRes.data || [];
@@ -218,7 +219,6 @@ export const dataService = {
           balance: Number(p.balance),
           total_receivable,
           total_debt,
-          // Kullanıcı isteği: PIN herkese görünür olsun
           recovery_pin: p.recovery_pin,
           is_online: p.is_online !== false,
           is_bankrupt: p.is_bankrupt === true,
@@ -253,10 +253,17 @@ export const dataService = {
         if (found) {
           currentPlayer = found;
           // Oturum anahtarını bu oyuncuyla senkronize et
-          try {
-            supabase.from('players').update({ session_token: sessionToken, is_online: true }).eq('id', found.id);
-          } catch {}
+          if (found.session_token) {
+            savePlayerSessionToken(found.id, found.session_token, room.id);
+          } else {
+            savePlayerSessionToken(found.id, sessionToken, room.id);
+            try {
+              supabase.from('players').update({ session_token: sessionToken, is_online: true }).eq('id', found.id);
+            } catch {}
+          }
         }
+      } else if (currentPlayer) {
+        savePlayerSessionToken(currentPlayer.id, sessionToken, room.id);
       }
 
       // CRITICAL: Eğer bu cihazdaki kullanıcı bu odada geçerli bir oyuncu değilse,
@@ -278,55 +285,53 @@ export const dataService = {
   },
 
   subscribeToRoom(roomId: string, onChange: () => void): () => void {
-    if (isSupabaseConfigured() && supabase) {
-      const channelId = `room_live_${roomId.replace(/-/g, '')}_${Math.random().toString(36).substring(2, 6)}`;
-      const channel = supabase
-        .channel(channelId)
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'players' },
-          (payload: any) => {
-            if (!payload?.new?.room_id || payload.new.room_id === roomId || payload?.old?.room_id === roomId) {
-              onChange();
-            }
-          }
-        )
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'transactions' },
-          (payload: any) => {
-            if (!payload?.new?.room_id || payload.new.room_id === roomId || payload?.old?.room_id === roomId) {
-              onChange();
-            }
-          }
-        )
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'debts' },
-          (payload: any) => {
-            if (!payload?.new?.room_id || payload.new.room_id === roomId || payload?.old?.room_id === roomId) {
-              onChange();
-            }
-          }
-        )
-        .subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-            onChange();
-          }
-        });
-
-      return () => {
-        supabase?.removeChannel(channel);
-      };
+    if (!isSupabaseConfigured() || !supabase) {
+      return () => {};
     }
 
-    return () => {};
+    let isSubscribed = true;
+
+    const channel = supabase
+      .channel(`monopoly_room_realtime_${roomId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` },
+        () => { if (isSubscribed) onChange(); }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'players', filter: `room_id=eq.${roomId}` },
+        () => { if (isSubscribed) onChange(); }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'debts', filter: `room_id=eq.${roomId}` },
+        () => { if (isSubscribed) onChange(); }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'transactions', filter: `room_id=eq.${roomId}` },
+        () => { if (isSubscribed) onChange(); }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          onChange();
+        }
+      });
+
+    return () => {
+      isSubscribed = false;
+      if (supabase) {
+        supabase.removeChannel(channel);
+      }
+    };
   },
 
   ensureConnection(): void {
     if (isSupabaseConfigured() && supabase) {
       try {
-        if (supabase.realtime && typeof supabase.realtime.connect === 'function') {
+        const state = supabase.realtime.connectionState();
+        if (state !== 'open' && state !== 'connecting') {
           supabase.realtime.connect();
         }
       } catch (err) {
@@ -336,7 +341,7 @@ export const dataService = {
   },
 
   async transferMoney(roomId: string, fromId: string, toId: string, amount: number, description?: string): Promise<void> {
-    const sessionToken = getOrCreateSessionToken();
+    const sessionToken = getOrCreateSessionToken(fromId, roomId);
 
     if (!isSupabaseConfigured() || !supabase) {
       throw new Error('Supabase bağlantısı bulunamadı.');
@@ -357,7 +362,7 @@ export const dataService = {
   },
 
   async lendDebt(roomId: string, creditorId: string, debtorId: string, amount: number, description?: string): Promise<void> {
-    const sessionToken = getOrCreateSessionToken();
+    const sessionToken = getOrCreateSessionToken(creditorId, roomId);
 
     if (!isSupabaseConfigured() || !supabase) {
       throw new Error('Supabase bağlantısı bulunamadı.');
@@ -378,7 +383,7 @@ export const dataService = {
   },
 
   async approveDebt(roomId: string, debtId: string): Promise<void> {
-    const sessionToken = getOrCreateSessionToken();
+    const sessionToken = getOrCreateSessionToken(undefined, roomId);
 
     if (!isSupabaseConfigured() || !supabase) {
       throw new Error('Supabase bağlantısı bulunamadı.');
@@ -396,7 +401,7 @@ export const dataService = {
   },
 
   async rejectDebt(roomId: string, debtId: string): Promise<void> {
-    const sessionToken = getOrCreateSessionToken();
+    const sessionToken = getOrCreateSessionToken(undefined, roomId);
 
     if (!isSupabaseConfigured() || !supabase) {
       throw new Error('Supabase bağlantısı bulunamadı.');
@@ -414,7 +419,7 @@ export const dataService = {
   },
 
   async payDebt(roomId: string, debtId: string, amount: number): Promise<void> {
-    const sessionToken = getOrCreateSessionToken();
+    const sessionToken = getOrCreateSessionToken(undefined, roomId);
 
     if (!isSupabaseConfigured() || !supabase) {
       throw new Error('Supabase bağlantısı bulunamadı.');
@@ -433,7 +438,7 @@ export const dataService = {
   },
 
   async settleDebt(roomId: string, debtId: string, agreedPayment: number): Promise<void> {
-    const sessionToken = getOrCreateSessionToken();
+    const sessionToken = getOrCreateSessionToken(undefined, roomId);
 
     if (!isSupabaseConfigured() || !supabase) {
       throw new Error('Supabase bağlantısı bulunamadı.');
@@ -452,7 +457,7 @@ export const dataService = {
   },
 
   async bankerAdjust(roomId: string, playerId: string, amountDelta: number, description: string): Promise<void> {
-    const sessionToken = getOrCreateSessionToken();
+    const sessionToken = getOrCreateSessionToken(undefined, roomId);
 
     if (!isSupabaseConfigured() || !supabase) {
       throw new Error('Supabase bağlantısı bulunamadı.');
@@ -482,6 +487,7 @@ export const dataService = {
       .select('*')
       .eq('debt_id', debtId)
       .order('created_at', { ascending: false });
+
     const { data: settlements } = await supabase
       .from('debt_settlements')
       .select('*')
@@ -505,7 +511,7 @@ export const dataService = {
   },
 
   async payToBank(roomId: string, amount: number, description?: string): Promise<void> {
-    const sessionToken = getOrCreateSessionToken();
+    const sessionToken = getOrCreateSessionToken(undefined, roomId);
     if (!isSupabaseConfigured() || !supabase) {
       throw new Error('Supabase bağlantısı bulunamadı.');
     }
@@ -523,7 +529,7 @@ export const dataService = {
   },
 
   async declareBankruptcy(roomId: string, beneficiaryId?: string | null): Promise<void> {
-    const sessionToken = getOrCreateSessionToken();
+    const sessionToken = getOrCreateSessionToken(undefined, roomId);
     if (!isSupabaseConfigured() || !supabase) {
       throw new Error('Supabase bağlantısı bulunamadı.');
     }
@@ -540,7 +546,7 @@ export const dataService = {
   },
 
   async reverseTransaction(roomId: string, transactionId: string): Promise<void> {
-    const sessionToken = getOrCreateSessionToken();
+    const sessionToken = getOrCreateSessionToken(undefined, roomId);
     if (!isSupabaseConfigured() || !supabase) {
       throw new Error('Supabase bağlantısı bulunamadı.');
     }
@@ -557,7 +563,7 @@ export const dataService = {
   },
 
   async endGame(roomId: string, status: 'active' | 'ended' = 'ended'): Promise<void> {
-    const sessionToken = getOrCreateSessionToken();
+    const sessionToken = getOrCreateSessionToken(undefined, roomId);
     if (!isSupabaseConfigured() || !supabase) {
       throw new Error('Supabase bağlantısı bulunamadı.');
     }
