@@ -484,14 +484,19 @@ export const App: React.FC = () => {
   };
 
   // Shortcut triggers from PlayerCard or PlayerDetail
-  const handleQuickSendMoney = (targetPlayer: Player) => {
-    setPreSelectedReceiver(targetPlayer);
+  const handleQuickSendMoney = (targetPlayer?: Player | null) => {
+    setPreSelectedReceiver(targetPlayer || null);
     setIsTransferOpen(true);
   };
 
-  const handleQuickLend = (targetPlayer: Player) => {
-    setPreSelectedDebtor(targetPlayer);
+  const handleQuickLend = (targetPlayer?: Player | null) => {
+    setPreSelectedDebtor(targetPlayer || null);
     setIsLendOpen(true);
+  };
+
+  const handlePayBank = () => {
+    setPreSelectedReceiver({ id: 'bank', name: 'Banka Kasası' } as any);
+    setIsTransferOpen(true);
   };
 
   const handleQuickPayDebt = (debtId?: string) => {
@@ -587,6 +592,8 @@ export const App: React.FC = () => {
           players={players}
           currentPlayer={currentPlayer}
           onSendMoney={handleQuickSendMoney}
+          onPayBank={handlePayBank}
+          onLendDebt={handleQuickLend}
           onSelectPlayer={(p) => setDetailPlayer(p)}
           onCopyRoomCode={handleCopyRoomCode}
         />

@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { ArrowUpDown, UserPlus, Skull } from 'lucide-react';
+import { ArrowUpDown, UserPlus, Skull, Users } from 'lucide-react';
 import { Player } from '../types';
 import { PlayerCard } from './PlayerCard';
+import { HeroPlayerCard } from './HeroPlayerCard';
 
 interface PlayerListProps {
   players: Player[];
   currentPlayer: Player;
-  onSendMoney: (player: Player) => void;
+  onSendMoney: (player?: Player | null) => void;
+  onPayBank: () => void;
+  onLendDebt: (debtor?: Player | null) => void;
   onSelectPlayer: (player: Player) => void;
   onCopyRoomCode: () => void;
 }
@@ -15,6 +18,8 @@ export const PlayerList: React.FC<PlayerListProps> = ({
   players,
   currentPlayer,
   onSendMoney,
+  onPayBank,
+  onLendDebt,
   onSelectPlayer,
   onCopyRoomCode,
 }) => {
@@ -34,6 +39,13 @@ export const PlayerList: React.FC<PlayerListProps> = ({
   // Kullanıcının kendisi (Sen)
   const me = players.find(p => p.id === currentPlayer?.id) || currentPlayer;
 
+  // Liderlik sıralaması (Bakiye bazlı genel masa derecesi)
+  const rankedPlayers = [...activePlayers].sort((a, b) => b.balance - a.balance);
+  const getRank = (playerId: string) => {
+    const idx = rankedPlayers.findIndex(p => p.id === playerId);
+    return idx >= 0 ? idx + 1 : undefined;
+  };
+
   // Diğer aktif oyuncular
   const otherPlayers = activePlayers
     .filter(p => p.id !== currentPlayer?.id)
@@ -49,68 +61,75 @@ export const PlayerList: React.FC<PlayerListProps> = ({
   };
 
   return (
-    <div className="space-y-3 pt-1">
-      {/* Başlık: Oyuncular (Sayısı) + Bakiye Sıralı */}
-      <div className="flex items-center justify-between px-0.5">
-        <h2 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-1.5 select-none">
-          <span>Oyuncular</span>
-          <span className="text-neutral-400 font-normal">({activePlayers.length})</span>
-        </h2>
-
-        <button
-          type="button"
-          onClick={toggleSort}
-          className="flex items-center gap-1 text-xs text-neutral-400 hover:text-white transition-colors cursor-pointer select-none active:scale-95"
-          title="Sıralamayı değiştir"
-        >
-          <span>{sortBy === 'balance' ? 'Bakiye sıralı' : 'İsim sıralı'}</span>
-          <ArrowUpDown className="w-3.5 h-3.5 text-neutral-400" />
-        </button>
-      </div>
-
-      {/* 1. KULLANICININ KENDİSİ (SEN) */}
+    <div className="space-y-4 pt-1">
+      {/* 1. KULLANICININ KENDİSİ: APPLE HERO KARTI */}
       {me && (
-        <PlayerCard
-          key={me.id}
+        <HeroPlayerCard
           player={me}
-          isCurrentPlayer={true}
-          onSendMoney={onSendMoney}
+          rank={getRank(me.id)}
+          totalPlayers={activePlayers.length}
+          onSendMoney={() => onSendMoney(null)}
+          onPayBank={onPayBank}
+          onLendDebt={() => onLendDebt(null)}
           onSelectPlayer={onSelectPlayer}
         />
       )}
 
-      {/* 2. DİĞER AKTİF OYUNCULAR */}
-      {otherPlayers.length > 0 ? (
-        <div className="space-y-2.5">
-          {otherPlayers.map(player => (
-            <PlayerCard
-              key={player.id}
-              player={player}
-              isCurrentPlayer={false}
-              onSendMoney={onSendMoney}
-              onSelectPlayer={onSelectPlayer}
-            />
-          ))}
+      {/* 2. DİĞER OYUNCULAR BÖLÜMÜ */}
+      <div className="space-y-2.5 pt-1">
+        <div className="flex items-center justify-between px-1">
+          <h2 className="text-sm font-bold text-neutral-300 tracking-tight flex items-center gap-1.5 select-none">
+            <Users className="w-4 h-4 text-neutral-400" />
+            <span>Diğer Oyuncular</span>
+            <span className="text-neutral-500 font-normal">({otherPlayers.length})</span>
+          </h2>
+
+          {otherPlayers.length > 1 && (
+            <button
+              type="button"
+              onClick={toggleSort}
+              className="flex items-center gap-1 text-xs text-neutral-400 hover:text-white transition-colors cursor-pointer select-none active:scale-95"
+              title="Sıralamayı değiştir"
+            >
+              <span>{sortBy === 'balance' ? 'Bakiye sıralı' : 'İsim sıralı'}</span>
+              <ArrowUpDown className="w-3.5 h-3.5 text-neutral-400" />
+            </button>
+          )}
         </div>
-      ) : (
-        /* Masada henüz başka oyuncu yoksa şık davet kartı */
-        <div className="p-4 rounded-2xl bg-[#11141B] border border-white/[0.06] text-center shadow-lg">
-          <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mx-auto mb-2 text-emerald-400">
-            <UserPlus className="w-4 h-4" />
+
+        {otherPlayers.length > 0 ? (
+          <div className="space-y-2">
+            {otherPlayers.map(player => (
+              <PlayerCard
+                key={player.id}
+                player={player}
+                isCurrentPlayer={false}
+                rank={getRank(player.id)}
+                onSendMoney={onSendMoney}
+                onSelectPlayer={onSelectPlayer}
+              />
+            ))}
           </div>
-          <h4 className="text-xs font-bold text-white mb-1">Masada henüz başka oyuncu yok</h4>
-          <p className="text-[11px] text-neutral-400 mb-3 max-w-xs mx-auto">
-            Arkadaşların oda kodunu girerek masaya anında katılabilir.
-          </p>
-          <button
-            type="button"
-            onClick={onCopyRoomCode}
-            className="btn-primary text-xs py-2 px-4 mx-auto font-bold cursor-pointer"
-          >
-            Oda Kodunu Kopyala
-          </button>
-        </div>
-      )}
+        ) : (
+          /* Masada henüz başka oyuncu yoksa şık davet kartı */
+          <div className="p-5 rounded-3xl bg-[#0E1218] border border-white/[0.08] text-center shadow-lg">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mx-auto mb-2.5 text-emerald-400">
+              <UserPlus className="w-5 h-5" />
+            </div>
+            <h4 className="text-sm font-bold text-white mb-1">Masada henüz başka oyuncu yok</h4>
+            <p className="text-xs text-neutral-400 mb-3.5 max-w-xs mx-auto">
+              Arkadaşların oda kodunu girerek masaya anında katılabilir.
+            </p>
+            <button
+              type="button"
+              onClick={onCopyRoomCode}
+              className="btn-primary text-xs py-2.5 px-5 mx-auto font-bold cursor-pointer"
+            >
+              Oda Kodunu Kopyala
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* 3. MASADAN AYRILAN OYUNCULAR (PIN İLE GERİ DÖNEBİLİRLER) */}
       {offlinePlayers.length > 0 && (
@@ -129,7 +148,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({
               <div
                 key={p.id}
                 onClick={() => onSelectPlayer(p)}
-                className="p-2.5 rounded-xl bg-[#11141B]/60 border border-white/[0.05] hover:border-white/[0.12] flex items-center justify-between text-xs cursor-pointer transition-all group"
+                className="p-2.5 rounded-xl bg-[#0E1218]/60 border border-white/[0.05] hover:border-white/[0.12] flex items-center justify-between text-xs cursor-pointer transition-all group"
               >
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-neutral-300 group-hover:text-white transition-colors">
