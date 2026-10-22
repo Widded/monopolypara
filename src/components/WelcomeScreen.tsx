@@ -82,11 +82,14 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
         // Akıllı Algılama: Kullanıcı isim yerine 4 haneli PIN yazdıysa, PIN ile geri bağla!
         if (/^\d{4}$/.test(cleanName)) {
+          resetSessionToken();
+          localStorage.removeItem('monopoly_active_player_id');
           await onReconnectWithPin(fullRoomCode, cleanName);
           return;
         }
 
         resetSessionToken();
+        localStorage.removeItem('monopoly_active_player_id');
         await onJoinRoom(fullRoomCode, cleanName);
       } else {
         // Reconnect with recovery PIN
@@ -96,6 +99,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           setLoading(false);
           return;
         }
+        resetSessionToken();
+        localStorage.removeItem('monopoly_active_player_id');
         await onReconnectWithPin(fullRoomCode, cleanPin);
       }
     } catch (err: any) {

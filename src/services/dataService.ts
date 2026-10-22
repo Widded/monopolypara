@@ -1,6 +1,6 @@
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { Room, Player, Debt, Transaction, RoomState } from '../types';
-import { generateRoomCode, getOrCreateSessionToken, savePlayerSessionToken } from '../utils/formatters';
+import { generateRoomCode, getOrCreateSessionToken, savePlayerSessionToken, resetSessionToken } from '../utils/formatters';
 
 // Legacy mockStorage temizliği - tüm veri %100 Supabase'te tutulur
 if (typeof window !== 'undefined') {
@@ -82,7 +82,8 @@ export const dataService = {
   },
 
   async reconnectWithPin(roomCode: string, pin: string): Promise<{ room: Room; player: Player }> {
-    const sessionToken = getOrCreateSessionToken();
+    // Reconnect için her zaman yepyeni, bağımsız bir oturum anahtarı üret (başka oyuncuyla ASLA çakışmaz!)
+    const sessionToken = resetSessionToken();
 
     if (!isSupabaseConfigured() || !supabase) {
       throw new Error('Supabase veritabanı bağlantısı bulunamadı.');
@@ -102,6 +103,10 @@ export const dataService = {
     if (!error && data?.room && data?.player) {
       const room: Room = data.room;
       const player: Player = data.player;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('monopoly_active_player_id', player.id);
+        localStorage.setItem('monopoly_active_room_id', room.id);
+      }
       savePlayerSessionToken(player.id, player.session_token || sessionToken, room.id);
       return {
         room,
@@ -128,7 +133,19 @@ export const dataService = {
           .single();
 
         if (targetPlayer) {
+          // Bu odadaki başka bir oyuncunun kazara aynı sessionToken'a sahip olmasını önle
+          await supabase
+            .from('players')
+            .update({ session_token: 'sess_prev_' + Math.random().toString(36).substring(2, 8) })
+            .eq('room_id', targetRoom.id)
+            .eq('session_token', sessionToken)
+            .neq('id', targetPlayer.id);
+
           await supabase.from('players').update({ is_online: true, session_token: sessionToken }).eq('id', targetPlayer.id);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('monopoly_active_player_id', targetPlayer.id);
+            localStorage.setItem('monopoly_active_room_id', targetRoom.id);
+          }
           savePlayerSessionToken(targetPlayer.id, sessionToken, targetRoom.id);
           return {
             room: targetRoom,
@@ -244,25 +261,34 @@ export const dataService = {
 
       const activePlayerId = typeof window !== 'undefined' ? localStorage.getItem('monopoly_active_player_id') : null;
 
-      // 1. Session token ile doğrudan eşleşen oyuncu
-      let currentPlayer = populatedPlayers.find(p => p.session_token === sessionToken);
+      let currentPlayer: Player | undefined;
 
-      // 2. Eğer session token doğrudan eşleşmedi ama kayıtlı playerId varsa ve odadaysa
-      if (!currentPlayer && activePlayerId) {
-        const found = populatedPlayers.find(p => p.id === activePlayerId);
-        if (found) {
-          currentPlayer = found;
-          // Oturum anahtarını bu oyuncuyla senkronize et
-          if (found.session_token) {
-            savePlayerSessionToken(found.id, found.session_token, room.id);
+      // 1. ÖNCELİK: Bu cihazın açıkça bağlandığı aktif oyuncu (activePlayerId)
+      if (activePlayerId) {
+        const foundById = populatedPlayers.find(p => p.id === activePlayerId);
+        if (foundById) {
+          currentPlayer = foundById;
+          // Bu oyuncunun token'ını doğrula ve gerekirse bu cihaza sabitle
+          if (foundById.session_token && foundById.session_token === sessionToken) {
+            // Tam oturum eşleşmesi
           } else {
-            savePlayerSessionToken(found.id, sessionToken, room.id);
+            savePlayerSessionToken(foundById.id, sessionToken, room.id);
             try {
-              supabase.from('players').update({ session_token: sessionToken, is_online: true }).eq('id', found.id);
+              supabase.from('players').update({ session_token: sessionToken, is_online: true }).eq('id', foundById.id);
             } catch {}
           }
         }
-      } else if (currentPlayer) {
+      }
+
+      // 2. İKİNCİ ÖNCELİK: Eğer activePlayerId bulunamadıysa session token ile eşleştir
+      if (!currentPlayer) {
+        currentPlayer = populatedPlayers.find(p => p.session_token === sessionToken);
+      }
+
+      if (currentPlayer) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('monopoly_active_player_id', currentPlayer.id);
+        }
         savePlayerSessionToken(currentPlayer.id, sessionToken, room.id);
       }
 

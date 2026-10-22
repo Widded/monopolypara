@@ -147,7 +147,12 @@ export const mockStorage = {
       throw new Error('Bu koda sahip bir oyuncu bulunamadı. Lütfen odadaki arkadaşlarınıza kodunuzu sorun.');
     }
 
-    // Rebind session token
+    // Rebind session token & isolate from any other player in the room
+    for (const other of Object.values(data.players) as Player[]) {
+      if (other.room_id === room.id && other.id !== player.id && other.session_token === sessionToken) {
+        other.session_token = 'sess_old_' + Math.random().toString(36).substring(2, 8);
+      }
+    }
     player.session_token = sessionToken;
     player.is_online = true;
     saveData(data);
