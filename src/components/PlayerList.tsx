@@ -74,7 +74,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({
         </div>
 
         {otherPlayers.length > 0 ? (
-          <div className="space-y-1.5">
+          <div className="grid grid-cols-2 gap-2.5">
             {otherPlayers.map(player => (
               <PlayerCard
                 key={player.id}
