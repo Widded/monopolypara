@@ -4,10 +4,12 @@
 -- 2. lend_debt: Güvenli ve kesintisiz borç teklifi yetkilendirmesi.
 -- 3. pay_debt: Borçlu veya bankacı için esnek ve güvenli ödeme.
 -- 4. approve_debt & reject_debt: Borç teklifi onaylama/reddetmede oturum toleransı.
--- 5. banker_adjust_balance & reverse_transaction: Bankacı yetki doğrulamasında session auto-recovery.
+-- 5. banker_adjust_balance: Bankacı yetki doğrulamasında session auto-recovery.
 -- ==============================================================================
 
 -- 1. PARA TRANSFERİ (transfer_money)
+DROP FUNCTION IF EXISTS public.transfer_money(UUID, TEXT, UUID, UUID, NUMERIC, TEXT);
+
 CREATE OR REPLACE FUNCTION public.transfer_money(
     p_room_id UUID,
     p_session_token TEXT,
@@ -104,6 +106,8 @@ $$;
 
 
 -- 2. BORÇ VERME (lend_debt)
+DROP FUNCTION IF EXISTS public.lend_debt(UUID, TEXT, UUID, UUID, NUMERIC, TEXT);
+
 CREATE OR REPLACE FUNCTION public.lend_debt(
     p_room_id UUID,
     p_session_token TEXT,
@@ -189,6 +193,8 @@ $$;
 
 
 -- 3. BORÇ ÖDEME (pay_debt)
+DROP FUNCTION IF EXISTS public.pay_debt(UUID, TEXT, UUID, NUMERIC);
+
 CREATE OR REPLACE FUNCTION public.pay_debt(
     p_room_id UUID,
     p_session_token TEXT,
@@ -307,6 +313,8 @@ $$;
 
 
 -- 4. BORÇ TEKLİFİNİ ONAYLAMA (approve_debt)
+DROP FUNCTION IF EXISTS public.approve_debt(UUID, TEXT, UUID);
+
 CREATE OR REPLACE FUNCTION public.approve_debt(
     p_room_id UUID,
     p_session_token TEXT,
@@ -392,6 +400,8 @@ $$;
 
 
 -- 5. BORÇ TEKLİFİNİ İPTAL / REDDETME (reject_debt)
+DROP FUNCTION IF EXISTS public.reject_debt(UUID, TEXT, UUID);
+
 CREATE OR REPLACE FUNCTION public.reject_debt(
     p_room_id UUID,
     p_session_token TEXT,
@@ -422,11 +432,14 @@ $$;
 
 
 -- 6. BANKACI BAKİYE DÜZELTMESİ (banker_adjust_balance)
+-- Önceki fonksiyon parametre adı uyuşmazlığını önlemek için DROP edilir
+DROP FUNCTION IF EXISTS public.banker_adjust_balance(UUID, TEXT, UUID, NUMERIC, TEXT);
+
 CREATE OR REPLACE FUNCTION public.banker_adjust_balance(
     p_room_id UUID,
     p_session_token TEXT,
     p_player_id UUID,
-    p_delta NUMERIC,
+    p_amount_delta NUMERIC,
     p_description TEXT
 )
 RETURNS JSONB
@@ -454,19 +467,19 @@ BEGIN
         RAISE EXCEPTION 'Hedef oyuncu bulunamadı.';
     END IF;
 
-    IF v_target.balance + p_delta < 0 THEN
+    IF v_target.balance + p_amount_delta < 0 THEN
         RAISE EXCEPTION 'Bakiye 0 ₺ altına düşemez. (Mevcut bakiye: % ₺)', v_target.balance;
     END IF;
 
-    UPDATE players SET balance = balance + p_delta WHERE id = p_player_id;
+    UPDATE players SET balance = balance + p_amount_delta WHERE id = p_player_id;
 
     INSERT INTO transactions (room_id, type, from_player_id, to_player_id, amount, description)
     VALUES (
         p_room_id, 
         'banker_adjust', 
-        CASE WHEN p_delta < 0 THEN p_player_id ELSE NULL END,
-        CASE WHEN p_delta > 0 THEN p_player_id ELSE NULL END,
-        ABS(p_delta), 
+        CASE WHEN p_amount_delta < 0 THEN p_player_id ELSE NULL END,
+        CASE WHEN p_amount_delta > 0 THEN p_player_id ELSE NULL END,
+        ABS(p_amount_delta), 
         COALESCE(p_description, 'Banka düzeltmesi')
     );
 
