@@ -43,6 +43,18 @@ export const LendDebtModal: React.FC<LendDebtModalProps> = ({
     prevIsOpenRef.current = isOpen;
   }, [isOpen, preSelectedDebtor, currentPlayer.id]);
 
+  // Esc tuşu ile kapatma
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const amount = parseFloat(amountStr) || 0;
@@ -70,7 +82,12 @@ export const LendDebtModal: React.FC<LendDebtModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-100 overflow-y-auto">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-100 overflow-y-auto"
+    >
       <div className="bg-[#0E1218] border border-white/[0.08] w-full max-w-sm rounded-3xl p-4.5 sm:p-5 shadow-2xl shadow-black/90 max-h-[92dvh] overflow-y-auto my-auto animate-in zoom-in-95 duration-150">
         {/* Header */}
         <div className="flex items-center justify-between pb-2.5 border-b border-border-subtle mb-3">
@@ -81,7 +98,7 @@ export const LendDebtModal: React.FC<LendDebtModalProps> = ({
           <button
             onClick={onClose}
             disabled={loading}
-            className="text-text-muted hover:text-text-main p-1 rounded-lg"
+            className="text-text-muted hover:text-text-main p-1 rounded-lg cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>

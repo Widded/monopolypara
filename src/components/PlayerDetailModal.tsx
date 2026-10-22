@@ -40,6 +40,18 @@ export const PlayerDetailModal: React.FC<PlayerDetailModalProps> = ({
     }
   }, [isOpen]);
 
+  // Esc tuşu ile kapatma
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen || !player) return null;
 
   const isSelf = player.id === currentPlayer.id;
@@ -47,7 +59,12 @@ export const PlayerDetailModal: React.FC<PlayerDetailModalProps> = ({
   const playerDebts = debts.filter(d => d.debtor_id === player.id && (d.status === 'active' || d.status === 'partially_paid'));
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-100 overflow-y-auto">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-100 overflow-y-auto"
+    >
       <div className="bg-[#0E1218] border border-white/[0.08] w-full max-w-sm rounded-3xl p-4.5 sm:p-5 shadow-2xl shadow-black/90 max-h-[92dvh] overflow-y-auto my-auto animate-in zoom-in-95 duration-150">
         {/* Başlık */}
         <div className="flex items-center justify-between pb-2.5 border-b border-border-subtle mb-3">
@@ -72,14 +89,14 @@ export const PlayerDetailModal: React.FC<PlayerDetailModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="text-text-subtle hover:text-text-main p-1 transition-colors"
+            className="text-text-subtle hover:text-text-main p-1 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Bakiye Özeti */}
-        <div className={`py-3 px-3.5 bg-bg-surface border rounded-lg text-center mb-3 ${isBankrupt ? 'border-red-500/30 bg-red-950/10' : 'border-border-subtle'}`}>
+        <div className={`py-3 px-3.5 bg-bg-surface border rounded-xl text-center mb-3 ${isBankrupt ? 'border-red-500/30 bg-red-950/10' : 'border-border-subtle'}`}>
           <div className="text-[11px] text-text-muted mb-0.5">Nakit Bakiye</div>
           <div className={`font-money font-bold text-2xl ${isBankrupt ? 'text-text-muted line-through' : 'text-text-main'}`}>
             {formatMoney(player.balance)}
@@ -95,13 +112,13 @@ export const PlayerDetailModal: React.FC<PlayerDetailModalProps> = ({
           </div>
         </div>
 
-        {/* Kurtarma PIN Kodu - Herkese Görünür */}
-        {!isBankrupt && (
+        {/* Kurtarma PIN Kodu - SADECE KENDİSİNE GÖRÜNÜR (Gizlilik Koruması) */}
+        {isSelf && !isBankrupt && (
           <div className="py-2.5 px-3 bg-bg-surface border border-white/[0.08] rounded-xl flex items-center justify-between text-xs mb-3 shadow-inner">
             <div>
               <span className="text-[11px] text-text-muted font-bold block">Kurtarma Kodu (PIN)</span>
               <span className="text-[10px] text-text-subtle">
-                {isSelf ? 'Çıkış yaparsan bu kodla geri dönersin' : 'Oyuncu çıkış yaparsa bu kodla geri dönebilir'}
+                Çıkış yaparsan bu kodla hesabına geri dönersin
               </span>
             </div>
             <span className="font-mono font-bold text-sm text-accent bg-bg-card border border-accent/30 px-2.5 py-0.5 rounded-lg tracking-widest select-all">

@@ -37,12 +37,29 @@ export const DebtDetailModal: React.FC<DebtDetailModalProps> = ({
     }
   }, [isOpen, debt]);
 
+  // Esc tuşu ile kapatma
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen || !debt) return null;
 
   const isClosed = debt.status === 'settled' || debt.remaining_amount === 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-150 overflow-y-auto">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-150 overflow-y-auto"
+    >
       <div className="bg-[#0E1218] border border-white/[0.08] w-full max-w-md rounded-3xl p-5 shadow-2xl shadow-black/90 max-h-[90dvh] overflow-y-auto my-auto animate-in zoom-in-95 duration-150">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-border-subtle mb-4">
@@ -60,7 +77,7 @@ export const DebtDetailModal: React.FC<DebtDetailModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="text-text-muted hover:text-text-main p-1.5 rounded-lg transition-colors"
+            className="text-text-muted hover:text-text-main p-1.5 rounded-lg transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
