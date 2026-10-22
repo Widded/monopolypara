@@ -47,19 +47,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <header className="shrink-0 z-30 bg-[#0B0E14]/95 backdrop-blur-md border-b border-white/[0.06] px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-3">
       <div className="max-w-md mx-auto flex items-center justify-between gap-2">
-        {/* Sol: Monopoly Logo + Ayırıcı | + Oda Kodu (Yeşil Işık + Kod + Kopyala) */}
+        {/* Sol: Oda Kodu (Yeşil Işık + Kod + Kopyala) */}
         <div className="flex items-center gap-2 min-w-0">
-          <span className="font-black text-xl tracking-tight text-white select-none">
-            Monopoly
-          </span>
-
-          <span className="text-white/20 select-none text-xs font-light">|</span>
-
-          {/* Oda Kodu Minimal Butonu */}
           <button
             type="button"
             onClick={handleCopyCode}
-            className="flex items-center gap-1.5 py-1 px-1.5 rounded-lg hover:bg-white/[0.05] transition-all cursor-pointer group select-none"
+            className="flex items-center gap-1.5 py-1 px-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] transition-all cursor-pointer group select-none"
             title={`Oda kodunu kopyala: ${room.code.replace(/^WID-?/i, '')}`}
           >
             <span
@@ -69,7 +62,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   : 'bg-neutral-500'
               }`}
             />
-            <span className="font-mono text-xs font-semibold text-neutral-300 group-hover:text-white tracking-wider">
+            <span className="font-mono text-xs font-bold text-neutral-200 group-hover:text-white tracking-wider">
               {formattedCode}
             </span>
             {copied ? (

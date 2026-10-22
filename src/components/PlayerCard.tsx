@@ -22,41 +22,22 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
     player.name && player.name.trim().length > 0 ? player.name.trim() : 'Oyuncu';
   const initial = safePlayerName.charAt(0).toUpperCase();
 
-  const handleCardClick = () => {
-    if (isBankrupt) {
-      onSelectPlayer(player);
-      return;
-    }
-    // Masada bir oyuncuya tıklandığında anında ona para gönderme akışı açılır
-    if (onSendMoney) {
-      onSendMoney(player);
-    } else {
-      onSelectPlayer(player);
-    }
-  };
-
   return (
     <div
-      onClick={handleCardClick}
+      onClick={() => onSelectPlayer(player)}
       className="rounded-2xl bg-[#0E1218] hover:bg-[#131722] active:scale-[0.99] border border-white/[0.05] hover:border-white/[0.1] p-3.5 transition-all cursor-pointer flex items-center justify-between gap-3 select-none group"
     >
       {/* Sol: Avatar + İsim */}
       <div className="flex items-center gap-3 min-w-0">
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelectPlayer(player);
-          }}
-          className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs shrink-0 border transition-all cursor-pointer ${
+        <div
+          className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs shrink-0 border transition-all ${
             isBankrupt
               ? 'bg-red-950/20 border-red-500/20 text-red-400'
-              : 'bg-white/[0.04] border-white/[0.08] text-neutral-300 hover:border-white/[0.2] hover:text-white'
+              : 'bg-white/[0.04] border-white/[0.08] text-neutral-300'
           }`}
-          title="Oyuncu detaylarını gör"
         >
           {initial}
-        </button>
+        </div>
 
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
